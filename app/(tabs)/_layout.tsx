@@ -11,7 +11,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary[500],
+        tabBarActiveTintColor: Colors.brand.green[600],
         tabBarInactiveTintColor: Colors.neutral[400],
         tabBarStyle: {
           backgroundColor: 'white',
@@ -41,7 +41,7 @@ export default function TabLayout() {
           marginTop: 4,
         },
         headerStyle: {
-          backgroundColor: Colors.primary[500],
+          backgroundColor: Colors.brand.green[600],
           elevation: 0,
           shadowOpacity: 0,
         },
@@ -68,35 +68,36 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Activities Tab */}
+      {/* Tracking Tab - Consolidated tracking features */}
       <Tabs.Screen
         name="activities"
         options={{
-          title: 'Aktiviteler',
+          title: 'Takip',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons 
-              name={focused ? 'list' : 'list-outline'} 
+              name={focused ? 'pulse' : 'pulse-outline'} 
               size={size} 
               color={color} 
             />
           ),
-          headerTitle: '📝 Aktiviteler',
+          headerTitle: 'Takip',
+          headerShown: false,
         }}
       />
 
-      {/* Health Tab */}
+      {/* Q&A Tab - MotherWorld */}
       <Tabs.Screen
-        name="health"
+        name="mother-world"
         options={{
-          title: 'Sağlık',
+          title: 'Soru & Cevap',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons 
-              name={focused ? 'medical' : 'medical-outline'} 
+              name={focused ? 'chatbubbles' : 'chatbubbles-outline'} 
               size={size} 
               color={color} 
             />
           ),
-          headerTitle: '🏥 Sağlık',
+          headerShown: false,
         }}
       />
 
@@ -112,7 +113,8 @@ export default function TabLayout() {
               color={color} 
             />
           ),
-          headerTitle: '📊 İstatistikler',
+          headerTitle: 'İstatistikler',
+          headerShown: false,
         }}
       />
 
@@ -128,9 +130,110 @@ export default function TabLayout() {
               color={color} 
             />
           ),
-          headerTitle: '👤 Profil',
+          headerTitle: 'Profil',
+          headerShown: false,
         }}
       />
+
+      {/* Hidden tabs - accessible but not shown in tab bar */}
+      <Tabs.Screen
+        name="feeding"
+        options={{
+          href: null,
+          headerTitle: 'Emzirme',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="sleep"
+        options={{
+          href: null,
+          headerTitle: 'Uyku Takibi',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="development"
+        options={{
+          href: null,
+          headerTitle: 'Gelişim',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="emergency"
+        options={{
+          href: null,
+          headerTitle: 'Acil Durumlar',
+        }}
+      />
+      <Tabs.Screen
+        name="health"
+        options={{
+          href: null,
+          headerTitle: 'Sağlık',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="nutrition"
+        options={{
+          href: null,
+          headerTitle: 'Beslenme',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="calendar"
+        options={{
+          href: null,
+          headerTitle: 'Takvim',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="planner"
+        options={{
+          href: null,
+          headerTitle: 'Planlayıcı',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          href: null,
+          headerTitle: 'Bildirimler',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="astronomy"
+        options={{
+          href: null,
+          headerTitle: 'Burçlar',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="menstrual"
+        options={{
+          href: null,
+          headerTitle: 'Adet Takvimi',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          href: null,
+          headerTitle: 'Keşfet',
+          headerShown: false,
+        }}
+      />
+    </Tabs>
+  );
+}
 
       {/* Hidden tabs - accessible but not shown in tab bar */}
       <Tabs.Screen

@@ -52,7 +52,7 @@ const OnboardingScreen: React.FC = () => {
       title: 'Hoş Geldiniz! 👋',
       subtitle: 'DostAnne ile bebek bakımınızı kolaylaştırın',
       description: 'Size özel bebek takip uygulamasına hoş geldiniz. Bebeğinizin tüm bilgilerini güvenle kaydedebilirsiniz.',
-      icon: 'happy',
+      icon: 'leaf',
     },
     {
       step: 2,
@@ -177,7 +177,7 @@ const OnboardingScreen: React.FC = () => {
         return (
           <View style={styles.stepContent}>
             <View style={styles.welcomeContainer}>
-              <Ionicons name={step?.icon as any} size={80} color="#007AFF" />
+              <Ionicons name={step?.icon as any} size={80} color="#22C55E" />
               <Text style={styles.welcomeTitle}>{step?.title}</Text>
               <Text style={styles.welcomeSubtitle}>{step?.subtitle}</Text>
               <Text style={styles.welcomeDescription}>{step?.description}</Text>

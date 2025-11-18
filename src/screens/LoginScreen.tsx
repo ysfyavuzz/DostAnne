@@ -50,7 +50,7 @@ const LoginScreen = () => {
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
-            <Ionicons name="happy" size={60} color="#FF6B9D" />
+            <Ionicons name="leaf" size={60} color="#22C55E" />
           </View>
           <Text style={styles.appName}>DostAnne</Text>
           <Text style={styles.tagline}>Harikasın anne! 💕</Text>
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#FFF0F5',
+    backgroundColor: '#F0FDF4',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
