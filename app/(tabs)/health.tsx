@@ -1,5 +1,5 @@
 import React from 'react';
-import HealthScreenNew from '../../src/screens/HealthScreenNew';
+import HealthScreen from '../../src/screens/HealthScreen';
 
 export default function HealthTab() {
   return <HealthScreenNew />;

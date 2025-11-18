@@ -1,6 +1,6 @@
 import React from 'react';
-import MenstrualScreenNew from '../../src/screens/MenstrualScreenNew';
+import MenstrualScreen from '../../src/screens/MenstrualScreen';
 
 export default function MenstrualTab() {
-  return <MenstrualScreenNew />;
+  return <MenstrualScreen />;
 }

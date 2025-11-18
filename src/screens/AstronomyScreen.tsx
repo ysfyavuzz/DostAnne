@@ -1,756 +1,247 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-  StatusBar,
-} from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
-const AstronomyScreen: React.FC = () => {
-  const dispatch = useDispatch();
-  const navigation = useNavigation<any>();
-  const [selectedTab, setSelectedTab] = useState<'horoscope' | 'astronomy' | 'moon' | 'baby'>('horoscope');
+const zodiacSigns = [
+  { sign: 'Koç', dates: '21 Mar - 19 Nis', icon: '♈', color: '#EF4444', element: 'Ateş' },
+  { sign: 'Boğa', dates: '20 Nis - 20 May', icon: '♉', color: '#10B981', element: 'Toprak' },
+  { sign: 'İkizler', dates: '21 May - 20 Haz', icon: '♊', color: '#F59E0B', element: 'Hava' },
+  { sign: 'Yengeç', dates: '21 Haz - 22 Tem', icon: '♋', color: '#3B82F6', element: 'Su' },
+  { sign: 'Aslan', dates: '23 Tem - 22 Ağu', icon: '♌', color: '#F59E0B', element: 'Ateş' },
+  { sign: 'Başak', dates: '23 Ağu - 22 Eyl', icon: '♍', color: '#10B981', element: 'Toprak' },
+  { sign: 'Terazi', dates: '23 Eyl - 22 Eki', icon: '♎', color: '#EC4899', element: 'Hava' },
+  { sign: 'Akrep', dates: '23 Eki - 21 Kas', icon: '♏', color: '#EF4444', element: 'Su' },
+  { sign: 'Yay', dates: '22 Kas - 21 Ara', icon: '♐', color: '#8B5CF6', element: 'Ateş' },
+  { sign: 'Oğlak', dates: '22 Ara - 19 Oca', icon: '♑', color: '#6B7280', element: 'Toprak' },
+  { sign: 'Kova', dates: '20 Oca - 18 Şub', icon: '♒', color: '#3B82F6', element: 'Hava' },
+  { sign: 'Balık', dates: '19 Şub - 20 Mar', icon: '♓', color: '#8B5CF6', element: 'Su' },
+];
 
-  // Burçlar ve özellikleri
-  const zodiacSigns = [
-    {
-      id: 1,
-      name: 'Koç',
-      dates: '21 Mart - 19 Nisan',
-      element: 'Ateş',
-      ruler: 'Mars',
-      traits: ['Cesur', 'Enerjik', 'Lider', 'İstekli'],
-      compatibility: ['Aslan', 'Yay', 'İkizler', 'Kova'],
-      babyPersonality: 'Aktif, meraklı ve enerjik bebekler',
-      icon: 'flame',
-      color: '#FF3B30',
-    },
-    {
-      id: 2,
-      name: 'Boğa',
-      dates: '20 Nisan - 20 Mayıs',
-      element: 'Toprak',
-      ruler: 'Venüs',
-      traits: ['Sakin', 'Sabırlı', 'Pratik', 'Sadık'],
-      compatibility: ['Başak', 'Oğlak', 'Yengeç', 'Balık'],
-      babyPersonality: 'Sakin, huzurlu ve sevecen bebekler',
-      icon: 'leaf',
-      color: '#34C759',
-    },
-    {
-      id: 3,
-      name: 'İkizler',
-      dates: '21 Mayıs - 20 Haziran',
-      element: 'Hava',
-      ruler: 'Merkür',
-      traits: ['Zeki', 'İletişimci', 'Adaptif', 'Meraklı'],
-      compatibility: ['Terazi', 'Kova', 'Koç', 'Aslan'],
-      babyPersonality: 'Konuşkan, sosyal ve hızlı öğrenen bebekler',
-      icon: 'sunny',
-      color: '#FF9500',
-    },
-    {
-      id: 4,
-      name: 'Yengeç',
-      dates: '21 Haziran - 22 Temmuz',
-      element: 'Su',
-      ruler: 'Ay',
-      traits: ['Duygusal', 'Koruyucu', 'İçten', 'Intuitif'],
-      compatibility: ['Boğa', 'Balık', 'Akrep', 'Başak'],
-      babyPersonality: 'Duygusal, bağ kurmayı seven ve hassas bebekler',
-      icon: 'water',
-      color: '#007AFF',
-    },
-    {
-      id: 5,
-      name: 'Aslan',
-      dates: '23 Temmuz - 22 Ağustos',
-      element: 'Ateş',
-      ruler: 'Güneş',
-      traits: ['Kendine güvenen', 'Cömert', 'Lider', 'Samimi'],
-      compatibility: ['Koç', 'Yay', 'İkizler', 'Terazi'],
-      babyPersonality: 'İlgi odağı, neşeli ve karizmatik bebekler',
-      icon: 'sunny',
-      color: '#FF9500',
-    },
-    {
-      id: 6,
-      name: 'Başak',
-      dates: '23 Ağustos - 22 Eylül',
-      element: 'Toprak',
-      ruler: 'Merkür',
-      traits: ['Mükemmeliyetçi', 'Analitik', 'Çalışkan', 'Pratik'],
-      compatibility: ['Boğa', 'Oğlak', 'Yengeç', 'Akrep'],
-      babyPersonality: 'Düzenli, sakin ve gözlemci bebekler',
-      icon: 'leaf',
-      color: '#34C759',
-    },
-  ];
-
-  // Astronomi bilgileri
-  const astronomyFacts = [
-    {
-      id: 1,
-      title: 'Ayın Evreleri',
-      description: 'Yeni ay, hilal, ilk dördün, dolunay, son dördün, son hilal',
-      babyImpact: 'Ay evreleri bebek uykusunu etkileyebilir',
-      icon: 'moon',
-      color: '#5AC8FA',
-    },
-    {
-      id: 2,
-      title: 'Gezegenler',
-      description: 'Güneş sistemindeki 8 gezegen ve özellikleri',
-      babyImpact: 'Mercury retrograde dönemlerinde bebekler daha huzursuz olabilir',
-      icon: 'planet',
-      color: '#AF52DE',
-    },
-    {
-      id: 3,
-      title: 'Yıldızlar',
-      description: 'En parlak yıldızlar ve takımyıldızları',
-      babyImpact: 'Bebekler yıldızları izlemeyi sever, uyku öncesi sakinleştirir',
-      icon: 'star',
-      color: '#FF9500',
-    },
-    {
-      id: 4,
-      title: 'Güneş Tutulması',
-      description: 'Güneş ve ay tutulmalarının etkileri',
-      babyImpact: 'Tutulma dönemlerinde bebekler daha hassas olabilir',
-      icon: 'sunny',
-      color: '#FF3B30',
-    },
-  ];
-
-  // Ay fazları
-  const moonPhases = [
-    {
-      id: 1,
-      name: 'Yeni Ay',
-      phase: '🌑',
-      meaning: 'Yeni başlangıçlar',
-      babyTips: [
-        'Yeni rutinler için iyi zaman',
-        'Bebekler daha uyumlu olabilir',
-        'Yeni gıdaları denemek için uygun',
-      ],
-      icon: 'moon',
-      color: '#8E8E93',
-    },
-    {
-      id: 2,
-      name: 'İlk Hilal',
-      phase: '🌒',
-      meaning: 'Büyüme ve gelişim',
-      babyTips: [
-        'Bebeklerin gelişim atakları',
-        'Yeni beceriler öğrenme zamanı',
-        'Enerji seviyesi artabilir',
-      ],
-      icon: 'moon',
-      color: '#5AC8FA',
-    },
-    {
-      id: 3,
-      name: 'Dolunay',
-      phase: '🌕',
-      meaning: 'Zirve ve enerji',
-      babyTips: [
-        'Uyku düzeni etkilenebilir',
-        'Bebekler daha aktif olabilir',
-        'Daha fazla dikkat gerekli',
-      ],
-      icon: 'moon',
-      color: '#FF9500',
-    },
-    {
-      id: 4,
-      name: 'Son Hilal',
-      phase: '🌘',
-      meaning: 'Salınım ve dinlenme',
-      babyTips: [
-        'Daha sakin ve huzurlu dönem',
-        'Uyku kalitesi artabilir',
-        'Dinlenmeye odaklanma zamanı',
-      ],
-      icon: 'moon',
-      color: '#007AFF',
-    },
-  ];
-
-  // Bebek isimleri anlamları
-  const babyNames = [
-    {
-      id: 1,
-      name: 'Luna',
-      meaning: 'Ay',
-      origin: 'Latince',
-      zodiac: 'Yengeç',
-      characteristics: ['Duygusal', 'Intuitif', 'Huzurlu'],
-      icon: 'moon',
-      color: '#5AC8FA',
-    },
-    {
-      id: 2,
-      name: 'Leo',
-      meaning: 'Aslan',
-      origin: 'Latince',
-      zodiac: 'Aslan',
-      characteristics: ['Cesur', 'Lider', 'Karizmatik'],
-      icon: 'flame',
-      color: '#FF9500',
-    },
-    {
-      id: 3,
-      name: 'Aurora',
-      meaning: 'Şafak',
-      origin: 'Latince',
-      zodiac: 'Koç',
-      characteristics: ['Enerjik', 'Umutlu', 'Yeni başlangıç'],
-      icon: 'sunny',
-      color: '#FF3B30',
-    },
-    {
-      id: 4,
-      name: 'Stella',
-      meaning: 'Yıldız',
-      origin: 'Latince',
-      zodiac: 'Terazi',
-      characteristics: ['Zeki', 'Dengeli', 'Parlak'],
-      icon: 'star',
-      color: '#AF52DE',
-    },
-  ];
-
-  const ZodiacCard = ({ sign }: any) => (
-    <View style={styles.zodiacCard}>
-      <View style={styles.zodiacHeader}>
-        <Ionicons name={sign.icon as any} size={32} color={sign.color} />
-        <View style={styles.zodiacInfo}>
-          <Text style={styles.zodiacName}>{sign.name}</Text>
-          <Text style={styles.zodiacDates}>{sign.dates}</Text>
-          <Text style={styles.zodiacElement}>{sign.element} • {sign.ruler}</Text>
-        </View>
-      </View>
-      
-      <View style={styles.zodiacSection}>
-        <Text style={styles.sectionLabel}>Özellikler:</Text>
-        <View style={styles.traitsContainer}>
-          {sign.traits.map((trait: string, index: number) => (
-            <View key={index} style={styles.traitBadge}>
-              <Text style={styles.traitText}>{trait}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.zodiacSection}>
-        <Text style={styles.sectionLabel}>Bebek Kişiliği:</Text>
-        <Text style={styles.babyPersonality}>{sign.babyPersonality}</Text>
-      </View>
-
-      <View style={styles.zodiacSection}>
-        <Text style={styles.sectionLabel}>Uyumlu Burçlar:</Text>
-        <Text style={styles.compatibilityText}>{sign.compatibility.join(', ')}</Text>
-      </View>
-    </View>
-  );
-
-  const AstronomyCard = ({ fact }: any) => (
-    <View style={styles.astronomyCard}>
-      <View style={styles.astronomyHeader}>
-        <Ionicons name={fact.icon as any} size={24} color={fact.color} />
-        <Text style={styles.astronomyTitle}>{fact.title}</Text>
-      </View>
-      <Text style={styles.astronomyDescription}>{fact.description}</Text>
-      <View style={styles.impactSection}>
-        <Text style={styles.impactLabel}>Bebek Etkisi:</Text>
-        <Text style={styles.impactText}>{fact.babyImpact}</Text>
-      </View>
-    </View>
-  );
-
-  const MoonPhaseCard = ({ phase }: any) => (
-    <View style={styles.moonCard}>
-      <View style={styles.moonHeader}>
-        <Text style={styles.moonPhase}>{phase.phase}</Text>
-        <View style={styles.moonInfo}>
-          <Text style={styles.moonName}>{phase.name}</Text>
-          <Text style={styles.moonMeaning}>{phase.meaning}</Text>
-        </View>
-      </View>
-      <View style={styles.moonTips}>
-        <Text style={styles.tipsLabel}>Bebek İpuçları:</Text>
-        {phase.babyTips.map((tip: string, index: number) => (
-          <View key={index} style={styles.tipItem}>
-            <Ionicons name="checkmark-circle" size={16} color="#34C759" />
-            <Text style={styles.tipText}>{tip}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
-  const BabyNameCard = ({ name }: any) => (
-    <View style={styles.nameCard}>
-      <View style={styles.nameHeader}>
-        <Ionicons name={name.icon as any} size={24} color={name.color} />
-        <View style={styles.nameInfo}>
-          <Text style={styles.nameText}>{name.name}</Text>
-          <Text style={styles.nameOrigin}>{name.origin} • {name.zodiac}</Text>
-        </View>
-      </View>
-      <Text style={styles.nameMeaning}>Anlam: {name.meaning}</Text>
-      <View style={styles.characteristicsContainer}>
-        <Text style={styles.characteristicsLabel}>Özellikler:</Text>
-        {name.characteristics.map((char: string, index: number) => (
-          <View key={index} style={styles.characteristicBadge}>
-            <Text style={styles.characteristicText}>{char}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
-  return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      
-      <View style={styles.header}>
-        <Text style={styles.title}>Astronomi & Burçlar</Text>
-        <Text style={styles.subtitle}>Kozmik rehberiniz</Text>
-      </View>
-
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'horoscope' && styles.activeTab]}
-          onPress={() => setSelectedTab('horoscope')}
-        >
-          <Ionicons 
-            name="star" 
-            size={20} 
-            color={selectedTab === 'horoscope' ? '#007AFF' : '#8E8E93'} 
-          />
-          <Text style={[styles.tabText, selectedTab === 'horoscope' && styles.activeTabText]}>
-            Burçlar
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'astronomy' && styles.activeTab]}
-          onPress={() => setSelectedTab('astronomy')}
-        >
-          <Ionicons 
-            name="planet" 
-            size={20} 
-            color={selectedTab === 'astronomy' ? '#007AFF' : '#8E8E93'} 
-          />
-          <Text style={[styles.tabText, selectedTab === 'astronomy' && styles.activeTabText]}>
-            Astronomi
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'moon' && styles.activeTab]}
-          onPress={() => setSelectedTab('moon')}
-        >
-          <Ionicons 
-            name="moon" 
-            size={20} 
-            color={selectedTab === 'moon' ? '#007AFF' : '#8E8E93'} 
-          />
-          <Text style={[styles.tabText, selectedTab === 'moon' && styles.activeTabText]}>
-            Ay
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'baby' && styles.activeTab]}
-          onPress={() => setSelectedTab('baby')}
-        >
-          <Ionicons 
-            name="heart" 
-            size={20} 
-            color={selectedTab === 'baby' ? '#007AFF' : '#8E8E93'} 
-          />
-          <Text style={[styles.tabText, selectedTab === 'baby' && styles.activeTabText]}>
-            İsimler
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {selectedTab === 'horoscope' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⭐ Burç Özellikleri</Text>
-          {zodiacSigns.map((sign) => (
-            <ZodiacCard key={sign.id} sign={sign} />
-          ))}
-        </View>
-      )}
-
-      {selectedTab === 'astronomy' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🪐 Astronomi Bilgileri</Text>
-          {astronomyFacts.map((fact) => (
-            <AstronomyCard key={fact.id} fact={fact} />
-          ))}
-        </View>
-      )}
-
-      {selectedTab === 'moon' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🌙 Ay Evreleri</Text>
-          {moonPhases.map((phase) => (
-            <MoonPhaseCard key={phase.id} phase={phase} />
-          ))}
-        </View>
-      )}
-
-      {selectedTab === 'baby' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>👶 Astronomik İsimler</Text>
-          {babyNames.map((name) => (
-            <BabyNameCard key={name.id} name={name} />
-          ))}
-        </View>
-      )}
-
-      <View style={styles.infoSection}>
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
-          <Text style={styles.infoText}>
-            Burçlar ve astronomi bilgileri eğlence amaçlıdır. Bilimsel dayanağı yoktur, sadece rehberlik içindir.
-          </Text>
-        </View>
-      </View>
-    </ScrollView>
-  );
+const horoscopeTraits: Record<string, { characteristics: string[]; parenting: string[] }> = {
+  'Koç': {
+    characteristics: ['Enerjik', 'Cesur', 'Hızlı öğrenir'],
+    parenting: ['Aktif oyunlar sunun', 'Bağımsızlığını destekleyin', 'Sabırlı olun'],
+  },
+  'Boğa': {
+    characteristics: ['Sakin', 'Kararlı', 'Sevgi dolu'],
+    parenting: ['Rutin oluşturun', 'Fiziksel temas önemli', 'Yavaş geçişler yapın'],
+  },
+  'İkizler': {
+    characteristics: ['Meraklı', 'İletişim yeteneği güçlü', 'Hareketli'],
+    parenting: ['Çeşitli aktiviteler sunun', 'Konuşarak iletişim kurun', 'Stimülasyon sağlayın'],
+  },
+  'Yengeç': {
+    characteristics: ['Duygusal', 'Korumacı', 'Sevecen'],
+    parenting: ['Güvenli ortam yaratın', 'Duyguları anlayın', 'Sarılıp sevgi gösterin'],
+  },
+  'Aslan': {
+    characteristics: ['Özgüvenli', 'Neşeli', 'Lider ruhlu'],
+    parenting: ['İlgi gösterin', 'Başarılarını kutlayın', 'Yaratıcılığını destekleyin'],
+  },
+  'Başak': {
+    characteristics: ['Düzenli', 'Detaycı', 'Pratik'],
+    parenting: ['Düzen ve temizliğe dikkat', 'Net kurallar koyun', 'Organize olun'],
+  },
+  'Terazi': {
+    characteristics: ['Dengeli', 'Sosyal', 'Uyumlu'],
+    parenting: ['Adil olun', 'Sosyalleşmeyi destekleyin', 'Güzel ortam yaratın'],
+  },
+  'Akrep': {
+    characteristics: ['Yoğun', 'Kararlı', 'Duygusal derinlik'],
+    parenting: ['Duyguları ciddiye alın', 'Güven oluşturun', 'Mahremiyet verin'],
+  },
+  'Yay': {
+    characteristics: ['İyimser', 'Maceracı', 'Özgür ruhlu'],
+    parenting: ['Keşfetmeye izin verin', 'Dış mekân aktiviteleri', 'Esneklik gösterin'],
+  },
+  'Oğlak': {
+    characteristics: ['Sorumlu', 'Disiplinli', 'Kararlı'],
+    parenting: ['Yapı ve düzen önemli', 'Hedefler koyun', 'Başarıyı takdir edin'],
+  },
+  'Kova': {
+    characteristics: ['Bağımsız', 'Yaratıcı', 'Farklı'],
+    parenting: ['Özgünlüğü kabul edin', 'Yenilikçi düşünmeyi destekleyin', 'Sosyal sorumluluk öğretin'],
+  },
+  'Balık': {
+    characteristics: ['Hayal gücü kuvvetli', 'Empatik', 'Sanatsal'],
+    parenting: ['Yaratıcılığı besleyin', 'Duygusal destek verin', 'Hayallerini dinleyin'],
+  },
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
-  header: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2D3436',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#636E72',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 12,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  activeTab: {
-    backgroundColor: '#E3F2FD',
-  },
-  tabText: {
-    fontSize: 11,
-    color: '#8E8E93',
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 16,
-  },
-  zodiacCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  zodiacHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  zodiacInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  zodiacName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2D3436',
-    marginBottom: 2,
-  },
-  zodiacDates: {
-    fontSize: 14,
-    color: '#636E72',
-    marginBottom: 2,
-  },
-  zodiacElement: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  zodiacSection: {
-    marginBottom: 12,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 6,
-  },
-  traitsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  traitBadge: {
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  traitText: {
-    fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  babyPersonality: {
-    fontSize: 14,
-    color: '#2D3436',
-    lineHeight: 20,
-  },
-  compatibilityText: {
-    fontSize: 14,
-    color: '#636E72',
-  },
-  astronomyCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  astronomyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  astronomyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginLeft: 8,
-  },
-  astronomyDescription: {
-    fontSize: 14,
-    color: '#636E72',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  impactSection: {
-    backgroundColor: '#F8F9FA',
-    padding: 8,
-    borderRadius: 8,
-  },
-  impactLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#636E72',
-    marginBottom: 4,
-  },
-  impactText: {
-    fontSize: 14,
-    color: '#2D3436',
-    lineHeight: 18,
-  },
-  moonCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  moonHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  moonPhase: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  moonInfo: {
-    flex: 1,
-  },
-  moonName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 2,
-  },
-  moonMeaning: {
-    fontSize: 14,
-    color: '#636E72',
-    fontStyle: 'italic',
-  },
-  moonTips: {
-    gap: 4,
-  },
-  tipsLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 6,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tipText: {
-    fontSize: 14,
-    color: '#2D3436',
-    marginLeft: 8,
-    lineHeight: 18,
-  },
-  nameCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  nameHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  nameInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  nameText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2D3436',
-    marginBottom: 2,
-  },
-  nameOrigin: {
-    fontSize: 14,
-    color: '#636E72',
-  },
-  nameMeaning: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginBottom: 8,
-    fontStyle: 'italic',
-  },
-  characteristicsContainer: {
-    gap: 4,
-  },
-  characteristicsLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 6,
-  },
-  characteristicBadge: {
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 6,
-  },
-  characteristicText: {
-    fontSize: 12,
-    color: '#FF9500',
-    fontWeight: '500',
-  },
-  infoSection: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#E3F2FD',
-    borderRadius: 12,
-    alignItems: 'flex-start',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1565C0',
-    marginLeft: 8,
-    lineHeight: 20,
-  },
-});
+export default function AstronomyScreenNew() {
+  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
+  
+  const [selectedSign, setSelectedSign] = useState<string | null>(null);
 
-export default AstronomyScreen;
+  const babyZodiacSign = useMemo(() => {
+    if (!currentBaby?.birthDate) return null;
+    
+    const birthDate = new Date(currentBaby.birthDate);
+    const month = birthDate.getMonth() + 1;
+    const day = birthDate.getDate();
+
+    if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return 'Koç';
+    if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return 'Boğa';
+    if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return 'İkizler';
+    if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return 'Yengeç';
+    if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return 'Aslan';
+    if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return 'Başak';
+    if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return 'Terazi';
+    if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return 'Akrep';
+    if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return 'Yay';
+    if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return 'Oğlak';
+    if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return 'Kova';
+    if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return 'Balık';
+    
+    return null;
+  }, [currentBaby]);
+
+  const signToDisplay = selectedSign || babyZodiacSign;
+  const signInfo = signToDisplay ? zodiacSigns.find(z => z.sign === signToDisplay) : null;
+  const traits = signToDisplay ? horoscopeTraits[signToDisplay] : null;
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+      <LinearGradient colors={['#8B5CF6', '#6D28D9']} style={[styles.header, shadows.medium]}>
+        <Ionicons name="sparkles" size={48} color="white" />
+        <Text style={[styles.headerTitle, typography.h1, { color: 'white' }]}>Burçlar</Text>
+        <Text style={[styles.headerSubtitle, typography.body, { color: 'white' }]}>
+          Bebeğinizin burç özellikleri
+        </Text>
+      </LinearGradient>
+
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {currentBaby && babyZodiacSign && (
+          <View style={[styles.babySignCard, { backgroundColor: 'white' }, shadows.medium]}>
+            <Text style={[styles.babySignTitle, typography.h3, { color: colors.text }]}>
+              {currentBaby.name}'in Burcu
+            </Text>
+            <View style={[styles.babySignContent, { backgroundColor: signInfo?.color + '10' }]}>
+              <Text style={[styles.signIcon, { color: signInfo?.color }]}>{signInfo?.icon}</Text>
+              <Text style={[styles.signName, typography.h2, { color: signInfo?.color }]}>
+                {babyZodiacSign}
+              </Text>
+              <Text style={[styles.signDates, typography.body, { color: colors.textSecondary }]}>
+                {signInfo?.dates}
+              </Text>
+              <View style={[styles.elementBadge, { backgroundColor: signInfo?.color + '20' }]}>
+                <Text style={[styles.elementText, { color: signInfo?.color }]}>
+                  {signInfo?.element} Elementi
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {signToDisplay && traits && (
+          <>
+            <View style={[styles.traitsCard, { backgroundColor: 'white' }, shadows.small]}>
+              <Text style={[styles.traitsTitle, typography.h3, { color: colors.text }]}>
+                Kişilik Özellikleri
+              </Text>
+              {traits.characteristics.map((trait, index) => (
+                <View key={index} style={styles.traitItem}>
+                  <Ionicons name="star" size={20} color={signInfo?.color} />
+                  <Text style={[styles.traitText, typography.body, { color: colors.text }]}>
+                    {trait}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={[styles.parentingCard, { backgroundColor: 'white' }, shadows.small]}>
+              <Text style={[styles.parentingTitle, typography.h3, { color: colors.text }]}>
+                Ebeveynlik İpuçları
+              </Text>
+              {traits.parenting.map((tip, index) => (
+                <View key={index} style={styles.parentingItem}>
+                  <View style={[styles.parentingNumber, { backgroundColor: signInfo?.color }]}>
+                    <Text style={styles.parentingNumberText}>{index + 1}</Text>
+                  </View>
+                  <Text style={[styles.parentingText, typography.body, { color: colors.text }]}>
+                    {tip}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        <View style={[styles.allSignsCard, { backgroundColor: 'white' }, shadows.small]}>
+          <Text style={[styles.allSignsTitle, typography.h3, { color: colors.text }]}>
+            Tüm Burçlar
+          </Text>
+          <View style={styles.signsGrid}>
+            {zodiacSigns.map((zodiac) => (
+              <TouchableOpacity
+                key={zodiac.sign}
+                style={[
+                  styles.signCard,
+                  { borderColor: zodiac.color },
+                  selectedSign === zodiac.sign && { backgroundColor: zodiac.color + '10' },
+                ]}
+                onPress={() => setSelectedSign(zodiac.sign)}
+              >
+                <Text style={[styles.signCardIcon, { color: zodiac.color }]}>{zodiac.icon}</Text>
+                <Text style={[styles.signCardName, typography.bodyBold, { color: colors.text }]}>
+                  {zodiac.sign}
+                </Text>
+                <Text style={[styles.signCardDates, typography.caption, { color: colors.textSecondary }]}>
+                  {zodiac.dates}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.infoCard, { backgroundColor: colors.warning[50] }]}>
+          <Ionicons name="information-circle" size={24} color={colors.warning[600]} />
+          <Text style={[styles.infoText, typography.caption, { color: colors.warning[700] }]}>
+            Burç bilgileri eğlence amaçlıdır. Her bebek benzersizdir ve kendi kişiliğini geliştirir.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: { padding: 24, paddingTop: 16, alignItems: 'center' },
+  headerTitle: { marginTop: 12, textAlign: 'center' },
+  headerSubtitle: { marginTop: 8, textAlign: 'center', opacity: 0.9 },
+  scrollView: { flex: 1, paddingHorizontal: 16 },
+  babySignCard: { marginTop: 16, padding: 20, borderRadius: 16 },
+  babySignTitle: { marginBottom: 16 },
+  babySignContent: { padding: 24, borderRadius: 12, alignItems: 'center', gap: 12 },
+  signIcon: { fontSize: 64 },
+  signName: { fontWeight: '700' },
+  signDates: {},
+  elementBadge: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, marginTop: 8 },
+  elementText: { fontSize: 14, fontWeight: '600' },
+  traitsCard: { marginTop: 16, padding: 20, borderRadius: 16 },
+  traitsTitle: { marginBottom: 16 },
+  traitItem: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  traitText: {},
+  parentingCard: { marginTop: 16, padding: 20, borderRadius: 16 },
+  parentingTitle: { marginBottom: 16 },
+  parentingItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 16 },
+  parentingNumber: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  parentingNumberText: { color: 'white', fontSize: 14, fontWeight: '700' },
+  parentingText: { flex: 1 },
+  allSignsCard: { marginTop: 16, padding: 20, borderRadius: 16 },
+  allSignsTitle: { marginBottom: 16 },
+  signsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  signCard: { flex: 1, minWidth: '30%', padding: 16, borderWidth: 2, borderRadius: 12, alignItems: 'center', gap: 8 },
+  signCardIcon: { fontSize: 32 },
+  signCardName: {},
+  signCardDates: { textAlign: 'center' },
+  infoCard: { flexDirection: 'row', gap: 12, marginTop: 16, marginBottom: 16, padding: 16, borderRadius: 12, alignItems: 'flex-start' },
+  infoText: { flex: 1 },
+});

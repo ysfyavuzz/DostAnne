@@ -1,6 +1,6 @@
 import React from 'react';
-import NutritionScreenNew from '../../src/screens/NutritionScreenNew';
+import NutritionScreen from '../../src/screens/NutritionScreen';
 
 export default function NutritionTab() {
-  return <NutritionScreenNew />;
+  return <NutritionScreen />;
 }

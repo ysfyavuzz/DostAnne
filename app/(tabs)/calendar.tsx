@@ -1,5 +1,5 @@
-import CalendarScreenNew from '../../src/screens/CalendarScreenNew';
+import CalendarScreen from '../../src/screens/CalendarScreen';
 
 export default function CalendarTabScreen() {
-  return <CalendarScreenNew />;
+  return <CalendarScreen />;
 }

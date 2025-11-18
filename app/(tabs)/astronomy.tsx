@@ -1,6 +1,6 @@
 import React from 'react';
-import AstronomyScreenNew from '../../src/screens/AstronomyScreenNew';
+import AstronomyScreen from '../../src/screens/AstronomyScreen';
 
 export default function AstronomyTab() {
-  return <AstronomyScreenNew />;
+  return <AstronomyScreen />;
 }

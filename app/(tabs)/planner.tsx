@@ -1,5 +1,5 @@
-import PlannerScreenNew from '../../src/screens/PlannerScreenNew';
+import PlannerScreen from '../../src/screens/PlannerScreen';
 
 export default function PlannerTabScreen() {
-  return <PlannerScreenNew />;
+  return <PlannerScreen />;
 }

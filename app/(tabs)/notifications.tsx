@@ -1,6 +1,6 @@
 import React from 'react';
-import NotificationsScreenNew from '../../src/screens/NotificationsScreenNew';
+import NotificationsScreen from '../../src/screens/NotificationsScreen';
 
 export default function NotificationsTab() {
-  return <NotificationsScreenNew />;
+  return <NotificationsScreen />;
 }
