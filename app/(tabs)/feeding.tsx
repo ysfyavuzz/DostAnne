@@ -1,6 +1,6 @@
 import React from 'react';
-import FeedingScreenNew from '../../src/screens/FeedingScreenNew';
+import FeedingScreen from '../../src/screens/FeedingScreen';
 
 export default function FeedingTab() {
-  return <FeedingScreenNew />;
+  return <FeedingScreen />;
 }

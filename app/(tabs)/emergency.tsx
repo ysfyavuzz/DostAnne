@@ -1,6 +1,6 @@
 import React from 'react';
-import EmergencyScreenNew from '../../src/screens/EmergencyScreenNew';
+import EmergencyScreen from '../../src/screens/EmergencyScreen';
 
 export default function EmergencyTab() {
-  return <EmergencyScreenNew />;
+  return <EmergencyScreen />;
 }

@@ -1,519 +1,514 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
   Switch,
   Alert,
+  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '../store/store';
-import { updateSettings } from '../store/store';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
-const ProfileScreen = () => {
-  const { baby, settings, activities } = useSelector((state: RootState) => state.activities);
-  const dispatch = useDispatch<AppDispatch>();
+type ThemeMode = 'light' | 'dark' | 'auto';
+type AccentColor = 'pink' | 'blue' | 'green' | 'purple' | 'orange';
 
-  const handleSettingToggle = (key: keyof typeof settings) => {
-    dispatch(updateSettings({ [key]: !settings[key] }));
+const ProfileScreenNew = () => {
+  const router = useRouter();
+  const { colors, typography, spacing, borderRadius, shadows, isDark } = useThemedStyles();
+  const systemColorScheme = useColorScheme();
+  
+  const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
+  
+  const [themeMode, setThemeMode] = useState<ThemeMode>('auto');
+  const [accentColor, setAccentColor] = useState<AccentColor>('pink');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+  const accentColors = [
+    { id: 'pink', color: colors.primary[500], gradient: colors.gradients.primary },
+    { id: 'blue', color: colors.secondary[500], gradient: colors.gradients.secondary },
+    { id: 'green', color: colors.success[500], gradient: colors.gradients.success },
+    { id: 'purple', color: '#A855F7', gradient: colors.gradients.purple },
+    { id: 'orange', color: colors.warning[500], gradient: colors.gradients.sunset },
+  ];
+
+  const calculateAge = useCallback(() => {
+    if (!currentBaby) return '';
+    const birthDate = new Date(currentBaby.birthDate);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - birthDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 30) return `${diffDays} günlük`;
+    const months = Math.floor(diffDays / 30);
+    const days = diffDays % 30;
+    return `${months} ay ${days} günlük`;
+  }, [currentBaby]);
+
+  const handleThemeChange = async (mode: ThemeMode) => {
+    setThemeMode(mode);
+    await AsyncStorage.setItem('themeMode', mode);
+    // Note: Actual theme change would require app restart or state management
+    Alert.alert('Tema Değiştirildi', 'Yeni tema ayarı uygulandı');
+  };
+
+  const handleAccentColorChange = async (colorId: AccentColor) => {
+    setAccentColor(colorId);
+    await AsyncStorage.setItem('accentColor', colorId);
+    Alert.alert('Renk Değiştirildi', 'Yeni renk ayarı uygulandı');
+  };
+
+  const handleExportData = () => {
+    Alert.alert(
+      'Veri Dışa Aktar',
+      'Hangi formatta dışa aktarmak istersiniz?',
+      [
+        { text: 'PDF', onPress: () => Alert.alert('PDF', 'PDF export yakında...') },
+        { text: 'Excel', onPress: () => Alert.alert('Excel', 'Excel export yakında...') },
+        { text: 'İptal', style: 'cancel' },
+      ]
+    );
   };
 
   const handleLogout = () => {
     Alert.alert(
       'Çıkış Yap',
-      'DostAnne uygulamasından çıkmak istediğinizden emin misiniz?',
+      'Çıkış yapmak istediğinize emin misiniz?',
       [
         { text: 'İptal', style: 'cancel' },
-        { text: 'Çıkış Yap', style: 'destructive', onPress: () => {
-          // TODO: Implement logout logic
-          console.log('Logout');
-        }},
+        { 
+          text: 'Çıkış Yap', 
+          style: 'destructive',
+          onPress: () => {
+            // Clear data and redirect to onboarding
+            Alert.alert('Çıkış yapıldı');
+          }
+        },
       ]
     );
   };
 
-  const handleBackup = () => {
-    Alert.alert(
-      'Yedekleme',
-      'Verileriniz buluta yedeklensin mi?',
-      [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Yedekle', onPress: () => {
-          // TODO: Implement backup logic
-          console.log('Backup started');
-        }},
-      ]
-    );
-  };
-
-  const menuItems = [
-    {
-      id: 'favorites',
-      title: 'Favoriler',
-      subtitle: 'Kaydedilen aktiviteler ve anılar',
-      icon: 'heart',
-      color: '#FF6B9D',
-      onPress: () => console.log('Favorites'),
-    },
-    {
-      id: 'backup',
-      title: 'Yedekleme',
-      subtitle: 'Verilerinizi yedekleyin',
-      icon: 'cloud-upload',
-      color: '#4299E1',
-      onPress: handleBackup,
-    },
-    {
-      id: 'export',
-      title: 'Verileri Dışa Aktar',
-      subtitle: 'PDF olarak indir',
-      icon: 'download',
-      color: '#48BB78',
-      onPress: () => console.log('Export'),
-    },
-    {
-      id: 'help',
-      title: 'Yardım',
-      subtitle: 'SSS ve destek',
-      icon: 'help-circle',
-      color: '#ED8936',
-      onPress: () => console.log('Help'),
-    },
-    {
-      id: 'about',
-      title: 'Hakkında',
-      subtitle: 'DostAnne v1.0.0',
-      icon: 'information-circle',
-      color: '#9F7AEA',
-      onPress: () => console.log('About'),
-    },
-    {
-      id: 'privacy',
-      title: 'Gizlilik Politikası',
-      subtitle: 'Veri güvenliğiniz',
-      icon: 'shield-checkmark',
-      color: '#38B2AC',
-      onPress: () => console.log('Privacy'),
-    },
-  ];
-
-  const advancedMenuItems = [
-    {
-      id: 'astronomy',
-      title: 'Astronomi & Burçlar',
-      subtitle: 'Günlük burç yorumları',
-      icon: 'star',
-      color: '#667eea',
-      onPress: () => console.log('Astronomy'),
-    },
-    {
-      id: 'mother-world',
-      title: 'Anne Dünyası',
-      subtitle: 'Anı defteri ve adet takibi',
-      icon: 'flower',
-      color: '#FF6B9D',
-      onPress: () => console.log('Mother World'),
-    },
-    {
-      id: 'planner',
-      title: 'Planlayıcı',
-      subtitle: 'Rutin ve beslenme planları',
-      icon: 'calendar',
-      color: '#9F7AEA',
-      onPress: () => console.log('Planner'),
-    },
-    {
-      id: 'health-center',
-      title: 'Sağlık Merkezi',
-      subtitle: 'Gelişim takibi ve aşılar',
-      icon: 'medkit',
-      color: '#48BB78',
-      onPress: () => console.log('Health Center'),
-    },
-    {
-      id: 'budget',
-      title: 'Bütçe & Fırsatlar',
-      subtitle: 'Masraf takibi ve indirimler',
-      icon: 'wallet',
-      color: '#ED8936',
-      onPress: () => console.log('Budget'),
-    },
-    {
-      id: 'shopping',
-      title: 'Alışveriş Asistanı',
-      subtitle: 'Ürün önerileri ve fiyatlar',
-      icon: 'cart',
-      color: '#4299E1',
-      onPress: () => console.log('Shopping'),
-    },
-    {
-      id: 'emergency',
-      title: 'Acil Durumlar',
-      subtitle: '112 ve ilk yardım bilgileri',
-      icon: 'alert',
-      color: '#DC3545',
-      onPress: () => console.log('Emergency'),
-    },
-  ];
+  const stylesObj = styles(colors, typography, spacing, borderRadius, shadows, isDark);
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Profile Header */}
-      <View style={styles.profileHeader}>
-        <View style={styles.profileInfo}>
-          <View style={styles.avatarContainer}>
-            <Ionicons name="person" size={40} color="white" />
-          </View>
-          <View style={styles.profileDetails}>
-            <Text style={styles.profileName}>Merhaba Anne! 👋</Text>
-            <Text style={styles.profileSubtitle}>
-              {baby ? `${baby.name} için takip ediyorsunuz` : 'Bebek bilgisi ekleyin'}
+    <ScrollView style={stylesObj.container}>
+      {/* Baby Profile Card */}
+      {currentBaby && (
+        <View style={stylesObj.profileSection}>
+          <LinearGradient
+            colors={colors.gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={stylesObj.profileCard}
+          >
+            <View style={stylesObj.avatarContainer}>
+              {currentBaby.photo ? (
+                <Image source={{ uri: currentBaby.photo }} style={stylesObj.avatar} />
+              ) : (
+                <View style={stylesObj.avatarPlaceholder}>
+                  <Ionicons name="person" size={48} color="white" />
+                </View>
+              )}
+              <TouchableOpacity style={stylesObj.editAvatarButton}>
+                <Ionicons name="camera" size={16} color="white" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={stylesObj.profileInfo}>
+              <Text style={stylesObj.babyName}>{currentBaby.name}</Text>
+              <Text style={stylesObj.babyAge}>
+                {currentBaby.gender === 'male' ? '👦' : '👧'} {calculateAge()}
+              </Text>
+              <View style={stylesObj.statsRow}>
+                <View style={stylesObj.statItem}>
+                  <Text style={stylesObj.statValue}>{currentBaby.weight} kg</Text>
+                  <Text style={stylesObj.statLabel}>Kilo</Text>
+                </View>
+                <View style={stylesObj.statDivider} />
+                <View style={stylesObj.statItem}>
+                  <Text style={stylesObj.statValue}>{currentBaby.height} cm</Text>
+                  <Text style={stylesObj.statLabel}>Boy</Text>
+                </View>
+                {currentBaby.bloodType && (
+                  <>
+                    <View style={stylesObj.statDivider} />
+                    <View style={stylesObj.statItem}>
+                      <Text style={stylesObj.statValue}>{currentBaby.bloodType}</Text>
+                      <Text style={stylesObj.statLabel}>Kan Grubu</Text>
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+      )}
+
+      {/* Theme Settings */}
+      <View style={stylesObj.section}>
+        <Text style={stylesObj.sectionTitle}>🎨 Tema Ayarları</Text>
+        <View style={stylesObj.card}>
+          <TouchableOpacity
+            style={[stylesObj.themeOption, themeMode === 'light' && stylesObj.themeOptionActive]}
+            onPress={() => handleThemeChange('light')}
+          >
+            <Ionicons 
+              name="sunny" 
+              size={24} 
+              color={themeMode === 'light' ? colors.primary[500] : colors.neutral[500]} 
+            />
+            <Text style={[stylesObj.themeOptionText, themeMode === 'light' && stylesObj.themeOptionTextActive]}>
+              Açık Tema
             </Text>
+            {themeMode === 'light' && (
+              <Ionicons name="checkmark-circle" size={20} color={colors.primary[500]} />
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[stylesObj.themeOption, themeMode === 'dark' && stylesObj.themeOptionActive]}
+            onPress={() => handleThemeChange('dark')}
+          >
+            <Ionicons 
+              name="moon" 
+              size={24} 
+              color={themeMode === 'dark' ? colors.primary[500] : colors.neutral[500]} 
+            />
+            <Text style={[stylesObj.themeOptionText, themeMode === 'dark' && stylesObj.themeOptionTextActive]}>
+              Koyu Tema
+            </Text>
+            {themeMode === 'dark' && (
+              <Ionicons name="checkmark-circle" size={20} color={colors.primary[500]} />
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[stylesObj.themeOption, themeMode === 'auto' && stylesObj.themeOptionActive]}
+            onPress={() => handleThemeChange('auto')}
+          >
+            <Ionicons 
+              name="phone-portrait" 
+              size={24} 
+              color={themeMode === 'auto' ? colors.primary[500] : colors.neutral[500]} 
+            />
+            <Text style={[stylesObj.themeOptionText, themeMode === 'auto' && stylesObj.themeOptionTextActive]}>
+              Otomatik
+            </Text>
+            {themeMode === 'auto' && (
+              <Ionicons name="checkmark-circle" size={20} color={colors.primary[500]} />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Accent Color */}
+      <View style={stylesObj.section}>
+        <Text style={stylesObj.sectionTitle}>🎨 Ana Renk</Text>
+        <View style={stylesObj.card}>
+          <View style={stylesObj.colorGrid}>
+            {accentColors.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={stylesObj.colorOption}
+                onPress={() => handleAccentColorChange(item.id as AccentColor)}
+              >
+                <LinearGradient
+                  colors={item.gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[
+                    stylesObj.colorCircle,
+                    accentColor === item.id && stylesObj.colorCircleActive
+                  ]}
+                >
+                  {accentColor === item.id && (
+                    <Ionicons name="checkmark" size={24} color="white" />
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
-        <TouchableOpacity style={styles.editButton}>
-          <Ionicons name="create" size={20} color="#FF6B9D" />
+      </View>
+
+      {/* Settings */}
+      <View style={stylesObj.section}>
+        <Text style={stylesObj.sectionTitle}>⚙️ Ayarlar</Text>
+        <View style={stylesObj.card}>
+          <View style={stylesObj.settingItem}>
+            <View style={stylesObj.settingLeft}>
+              <Ionicons name="notifications" size={24} color={colors.primary[500]} />
+              <Text style={stylesObj.settingText}>Bildirimler</Text>
+            </View>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={setNotificationsEnabled}
+              trackColor={{ false: colors.neutral[300], true: colors.primary[300] }}
+              thumbColor={notificationsEnabled ? colors.primary[500] : colors.neutral[100]}
+            />
+          </View>
+
+          <TouchableOpacity style={stylesObj.settingItem}>
+            <View style={stylesObj.settingLeft}>
+              <Ionicons name="language" size={24} color={colors.secondary[500]} />
+              <Text style={stylesObj.settingText}>Dil</Text>
+            </View>
+            <View style={stylesObj.settingRight}>
+              <Text style={stylesObj.settingValue}>Türkçe</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesObj.settingItem}>
+            <View style={stylesObj.settingLeft}>
+              <Ionicons name="person" size={24} color={colors.success[500]} />
+              <Text style={stylesObj.settingText}>Bebek Profilini Düzenle</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesObj.settingItem} onPress={handleExportData}>
+            <View style={stylesObj.settingLeft}>
+              <Ionicons name="download" size={24} color={colors.warning[500]} />
+              <Text style={stylesObj.settingText}>Veri Dışa Aktar</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesObj.settingItem}>
+            <View style={stylesObj.settingLeft}>
+              <Ionicons name="information-circle" size={24} color={colors.neutral[500]} />
+              <Text style={stylesObj.settingText}>Hakkında</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Logout */}
+      <View style={stylesObj.section}>
+        <TouchableOpacity style={stylesObj.logoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out" size={20} color={colors.error[500]} />
+          <Text style={stylesObj.logoutText}>Çıkış Yap</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Quick Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{activities.length}</Text>
-          <Text style={styles.statLabel}>Aktivite</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{baby ? getBabyAge(baby.birthDate) : '-'}</Text>
-          <Text style={styles.statLabel}>Yaş</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>15</Text>
-          <Text style={styles.statLabel}>Özellik</Text>
-        </View>
+      {/* App Info */}
+      <View style={stylesObj.appInfo}>
+        <Text style={stylesObj.appInfoText}>DostAnne v1.1.0</Text>
+        <Text style={stylesObj.appInfoText}>© 2024 DostAnne Team</Text>
       </View>
 
-      {/* Settings Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ayarlar</Text>
-        
-        <View style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="moon" size={20} color="#667eea" />
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Karanlık Mod</Text>
-              <Text style={styles.settingSubtitle}>Göz yorgunluğunu azaltır</Text>
-            </View>
-          </View>
-          <Switch
-            value={settings.theme === 'dark'}
-            onValueChange={(value) => {
-              dispatch(updateSettings({ theme: value ? 'dark' : 'light' }));
-            }}
-            trackColor={{ false: '#E2E8F0', true: '#FFB6C1' }}
-            thumbColor={settings.theme === 'dark' ? '#FF6B9D' : '#F7FAFC'}
-          />
-        </View>
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="notifications" size={20} color="#667eea" />
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Bildirimler</Text>
-              <Text style={styles.settingSubtitle}>Hatırlatıcılar ve uyarılar</Text>
-            </View>
-          </View>
-          <Switch
-            value={settings.notifications}
-            onValueChange={() => handleSettingToggle('notifications')}
-            trackColor={{ false: '#E2E8F0', true: '#FFB6C1' }}
-            thumbColor={settings.notifications ? '#FF6B9D' : '#F7FAFC'}
-          />
-        </View>
-
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="language" size={20} color="#667eea" />
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Dil</Text>
-              <Text style={styles.settingSubtitle}>Türkçe</Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#CBD5E0" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Advanced Features */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Gelişmiş Özellikler</Text>
-        
-        {advancedMenuItems.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.menuItem}
-            onPress={item.onPress}
-          >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: `${item.color}20` }]}>
-                <Ionicons name={item.icon as any} size={20} color={item.color} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>{item.title}</Text>
-                <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#CBD5E0" />
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Menu Items */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Diğer</Text>
-        
-        {menuItems.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.menuItem}
-            onPress={item.onPress}
-          >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: `${item.color}20` }]}>
-                <Ionicons name={item.icon as any} size={20} color={item.color} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>{item.title}</Text>
-                <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#CBD5E0" />
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out" size={20} color="#DC3545" />
-        <Text style={styles.logoutText}>Çıkış Yap</Text>
-      </TouchableOpacity>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>DostAnne v1.0.0</Text>
-        <Text style={styles.footerSubtext}>Harikasın anne! 💕</Text>
-      </View>
+      <View style={{ height: spacing['4xl'] }} />
     </ScrollView>
   );
 };
 
-// Helper function to calculate baby age
-const getBabyAge = (birthDate: string) => {
-  const birth = new Date(birthDate);
-  const today = new Date();
-  const diffTime = Math.abs(today.getTime() - birth.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays < 30) return `${diffDays} gün`;
-  const months = Math.floor(diffDays / 30);
-  return `${months} ay`;
-};
-
-const styles = StyleSheet.create({
+const styles = (colors: any, typography: any, spacing: any, borderRadius: any, shadows: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7FAFC',
+    backgroundColor: isDark ? colors.background.dark : colors.background.light,
   },
-  profileHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FF6B9D',
+  profileSection: {
+    padding: spacing.lg,
+    paddingTop: spacing.md,
   },
-  profileInfo: {
-    flexDirection: 'row',
+  profileCard: {
+    borderRadius: borderRadius['2xl'],
+    padding: spacing['2xl'],
     alignItems: 'center',
-    flex: 1,
+    ...shadows.lg,
   },
   avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
+    marginBottom: spacing.lg,
+    position: 'relative',
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: 'white',
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
-    marginRight: 15,
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: 'white',
   },
-  profileDetails: {
-    flex: 1,
+  editAvatarButton: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary[600],
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
   },
-  profileName: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  profileInfo: {
+    alignItems: 'center',
+  },
+  babyName: {
+    ...typography.h2,
     color: 'white',
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
-  profileSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+  babyAge: {
+    ...typography.body,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: spacing.lg,
   },
-  editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statsContainer: {
+  statsRow: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    margin: 20,
-    marginBottom: 10,
-    borderRadius: 15,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.xl,
   },
   statItem: {
-    flex: 1,
     alignItems: 'center',
+    paddingHorizontal: spacing.md,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2D3748',
+  statValue: {
+    ...typography.h4,
+    color: 'white',
+    fontWeight: '700',
+    marginBottom: spacing.xs,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#718096',
-    marginTop: 5,
+    ...typography.caption,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   statDivider: {
     width: 1,
-    backgroundColor: '#E2E8F0',
-    marginHorizontal: 15,
+    height: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   section: {
-    backgroundColor: 'white',
-    margin: 20,
-    marginTop: 0,
-    borderRadius: 15,
-    padding: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2D3748',
-    margin: 15,
-    marginBottom: 5,
+    ...typography.h4,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
+  },
+  card: {
+    backgroundColor: isDark ? colors.background.cardDark : 'white',
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  themeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  themeOptionActive: {
+    backgroundColor: colors.primary[50],
+    borderColor: colors.primary[500],
+  },
+  themeOptionText: {
+    ...typography.labelLarge,
+    color: colors.text.secondary,
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  themeOptionTextActive: {
+    color: colors.primary[500],
+    fontWeight: '600',
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: spacing.sm,
+  },
+  colorOption: {
+    padding: spacing.xs,
+  },
+  colorCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colorCircleActive: {
+    borderWidth: 3,
+    borderColor: colors.neutral[800],
   },
   settingItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[100],
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  settingContent: {
-    marginLeft: 15,
-    flex: 1,
+  settingText: {
+    ...typography.labelLarge,
+    color: colors.text.primary,
+    marginLeft: spacing.md,
   },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#2D3748',
-  },
-  settingSubtitle: {
-    fontSize: 12,
-    color: '#718096',
-    marginTop: 2,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-  },
-  menuItemLeft: {
+  settingRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
-  menuIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  menuContent: {
-    flex: 1,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#2D3748',
-  },
-  menuSubtitle: {
-    fontSize: 12,
-    color: '#718096',
-    marginTop: 2,
+  settingValue: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginRight: spacing.sm,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'white',
-    margin: 20,
-    marginBottom: 10,
-    padding: 15,
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: isDark ? colors.background.cardDark : 'white',
+    padding: spacing.lg,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1.5,
+    borderColor: colors.error[500],
   },
   logoutText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#DC3545',
-    marginLeft: 10,
+    ...typography.button,
+    color: colors.error[500],
+    marginLeft: spacing.sm,
   },
-  footer: {
+  appInfo: {
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 40,
+    paddingVertical: spacing.lg,
   },
-  footerText: {
-    fontSize: 12,
-    color: '#718096',
-  },
-  footerSubtext: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FF6B9D',
-    marginTop: 5,
+  appInfoText: {
+    ...typography.caption,
+    color: colors.text.tertiary,
+    marginBottom: spacing.xs,
   },
 });
 
-export default ProfileScreen;
+export default React.memo(ProfileScreenNew);

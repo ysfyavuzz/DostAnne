@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,379 +6,560 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch, addActivity } from '../store/store';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const ActivitiesScreen = () => {
-  const { activities } = useSelector((state: RootState) => state.activities);
+type ActivityType = 'feeding' | 'sleep' | 'diaper' | 'health' | 'play' | 'milestone';
 
-  // Filter options
-  const filterOptions = [
-    { id: 'all', label: 'Hepsi' },
-    { id: 'baby', label: 'Bebek' },
-    { id: 'mother', label: 'Anne' },
-  ];
+interface ActivityTypeConfig {
+  type: ActivityType;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  color: string;
+  gradient: string[];
+}
 
-  // Sort options
-  const sortOptions = [
-    { id: 'recent', label: 'En Son' },
-    { id: 'oldest', label: 'En Eski' },
-  ];
+const ActivitiesScreenNew = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { colors, typography, spacing, borderRadius, shadows, isDark } = useThemedStyles();
+  
+  const activities = useSelector((state: RootState) => state.activities.activities);
+  const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
+  
+  const [selectedFilter, setSelectedFilter] = useState<ActivityType | 'all'>('all');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedActivityType, setSelectedActivityType] = useState<ActivityType>('feeding');
+  const [activityNotes, setActivityNotes] = useState('');
 
-  const [selectedFilter, setSelectedFilter] = React.useState('all');
-  const [selectedSort, setSelectedSort] = React.useState('recent');
+  const activityTypes: ActivityTypeConfig[] = useMemo(() => [
+    { 
+      type: 'feeding', 
+      icon: 'restaurant', 
+      label: 'Emzirme', 
+      color: colors.activity.feeding,
+      gradient: colors.gradients.primary,
+    },
+    { 
+      type: 'sleep', 
+      icon: 'moon', 
+      label: 'Uyku', 
+      color: colors.activity.sleep,
+      gradient: colors.gradients.purple,
+    },
+    { 
+      type: 'diaper', 
+      icon: 'water', 
+      label: 'Bez', 
+      color: colors.activity.diaper,
+      gradient: colors.gradients.success,
+    },
+    { 
+      type: 'health', 
+      icon: 'medical', 
+      label: 'Sağlık', 
+      color: colors.activity.health,
+      gradient: colors.gradients.sunset,
+    },
+    { 
+      type: 'play', 
+      icon: 'game-controller', 
+      label: 'Oyun', 
+      color: colors.activity.play,
+      gradient: colors.gradients.ocean,
+    },
+    { 
+      type: 'milestone', 
+      icon: 'star', 
+      label: 'Milestone', 
+      color: colors.activity.milestone,
+      gradient: colors.gradients.secondary,
+    },
+  ], [colors]);
 
-  // Filter and sort activities
-  const filteredActivities = activities
-    .filter(activity => {
-      if (selectedFilter === 'all') return true;
-      return activity.actor === selectedFilter;
-    })
-    .sort((a, b) => {
-      const timeA = new Date(a.startTime).getTime();
-      const timeB = new Date(b.startTime).getTime();
-      return selectedSort === 'recent' ? timeB - timeA : timeA - timeB;
+  const filteredActivities = useMemo(() => {
+    if (selectedFilter === 'all') return activities;
+    return activities.filter(a => a.type === selectedFilter);
+  }, [activities, selectedFilter]);
+
+  const groupedActivities = useMemo(() => {
+    const groups: { [key: string]: typeof activities } = {};
+    
+    filteredActivities.forEach(activity => {
+      const date = new Date(activity.startTime).toLocaleDateString('tr-TR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+      
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(activity);
     });
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'feeding': return 'restaurant';
-      case 'sleep': return 'bed';
-      case 'diaper': return 'color-wash';
-      case 'medication': return 'medkit';
-      case 'note': return 'create';
-      default: return 'help';
-    }
-  };
+    return Object.entries(groups).sort((a, b) => {
+      return new Date(b[1][0].startTime).getTime() - new Date(a[1][0].startTime).getTime();
+    });
+  }, [filteredActivities]);
 
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'feeding': return '#FF6B9D';
-      case 'sleep': return '#9F7AEA';
-      case 'diaper': return '#48BB78';
-      case 'medication': return '#ED8936';
-      case 'note': return '#718096';
-      default: return '#667eea';
-    }
-  };
+  const getActivityConfig = useCallback((type: ActivityType) => {
+    return activityTypes.find(at => at.type === type);
+  }, [activityTypes]);
 
-  const getActivityLabel = (type: string) => {
-    switch (type) {
-      case 'feeding': return 'Beslenme';
-      case 'sleep': return 'Uyku';
-      case 'diaper': return 'Bez';
-      case 'medication': return 'İlaç';
-      case 'note': return 'Not';
-      default: return 'Diğer';
+  const handleAddActivity = useCallback(() => {
+    if (!currentBaby) {
+      Alert.alert('Uyarı', 'Lütfen önce bebek profilini oluşturun.');
+      return;
     }
+
+    const newActivity = {
+      id: Date.now().toString(),
+      babyId: currentBaby.id?.toString() || '1',
+      type: selectedActivityType,
+      actor: 'baby' as const,
+      startTime: new Date().toISOString(),
+      notes: activityNotes.trim() || undefined,
+      createdAt: new Date().toISOString(),
+    };
+
+    dispatch(addActivity(newActivity));
+    setModalVisible(false);
+    setActivityNotes('');
+    Alert.alert('Başarılı', 'Aktivite eklendi!');
+  }, [currentBaby, selectedActivityType, activityNotes, dispatch]);
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('tr-TR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const formatDuration = (startTime: string, endTime?: string) => {
-    const start = new Date(startTime);
-    const end = endTime ? new Date(endTime) : new Date();
-    const duration = end.getTime() - start.getTime();
-    const hours = Math.floor(duration / (1000 * 60 * 60));
-    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+    if (!endTime) return 'Devam ediyor';
     
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
+    const diff = new Date(endTime).getTime() - new Date(startTime).getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) return `${hours}s ${minutes}d`;
+    return `${minutes}d`;
   };
 
-  const renderActivity = ({ item }: { item: any }) => (
-    <View style={styles.activityItem}>
-      <View style={[styles.activityIcon, { backgroundColor: getActivityColor(item.type) }]}>
-        <Ionicons name={getActivityIcon(item.type) as any} size={20} color="white" />
-      </View>
-      
-      <View style={styles.activityContent}>
-        <View style={styles.activityHeader}>
-          <Text style={styles.activityType}>{getActivityLabel(item.type)}</Text>
-          <Text style={styles.activityActor}>
-            {item.actor === 'baby' ? 'Bebek' : 'Anne'}
-          </Text>
+  const renderActivityItem = ({ item }: { item: typeof activities[0] }) => {
+    const config = getActivityConfig(item.type);
+    if (!config) return null;
+
+    return (
+      <View style={styles(colors, typography, spacing, borderRadius, shadows, isDark).activityItem}>
+        <View style={[
+          styles(colors, typography, spacing, borderRadius, shadows, isDark).activityIcon,
+          { backgroundColor: config.color + '20' }
+        ]}>
+          <Ionicons name={config.icon} size={24} color={config.color} />
         </View>
         
-        <View style={styles.activityDetails}>
-          <Text style={styles.activityTime}>
-            {new Date(item.startTime).toLocaleDateString('tr-TR', {
-              day: '2-digit',
-              month: 'short',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+        <View style={styles(colors, typography, spacing, borderRadius, shadows, isDark).activityContent}>
+          <Text style={styles(colors, typography, spacing, borderRadius, shadows, isDark).activityTitle}>
+            {config.label}
           </Text>
-          
-          {item.quantity && (
-            <Text style={styles.activityQuantity}>
-              {item.quantity} {item.unit || ''}
+          <Text style={styles(colors, typography, spacing, borderRadius, shadows, isDark).activityTime}>
+            {formatTime(item.startTime)}
+            {item.endTime && ` • ${formatDuration(item.startTime, item.endTime)}`}
+          </Text>
+          {item.notes && (
+            <Text style={styles(colors, typography, spacing, borderRadius, shadows, isDark).activityNotes}>
+              {item.notes}
             </Text>
           )}
         </View>
-        
+
         {item.endTime && (
-          <Text style={styles.activityDuration}>
-            Süre: {formatDuration(item.startTime, item.endTime)}
-          </Text>
-        )}
-        
-        {item.notes && (
-          <Text style={styles.activityNotes} numberOfLines={2}>
-            {item.notes}
-          </Text>
+          <View style={styles(colors, typography, spacing, borderRadius, shadows, isDark).activityStatus}>
+            <Ionicons name="checkmark-circle" size={20} color={colors.success[500]} />
+          </View>
         )}
       </View>
-      
-      <TouchableOpacity style={styles.moreButton}>
-        <Ionicons name="ellipsis-vertical" size={20} color="#718096" />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
+
+  const stylesObj = styles(colors, typography, spacing, borderRadius, shadows, isDark);
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Aktiviteler</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Ionicons name="add" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
-
+    <View style={stylesObj.container}>
       {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
-        {filterOptions.map((option) => (
-          <TouchableOpacity
-            key={option.id}
-            style={[
-              styles.filterTab,
-              selectedFilter === option.id && styles.activeFilterTab,
-            ]}
-            onPress={() => setSelectedFilter(option.id)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                selectedFilter === option.id && styles.activeFilterText,
-              ]}
-            >
-              {option.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={stylesObj.filterContainer}
+        contentContainerStyle={stylesObj.filterContent}
+      >
+        <TouchableOpacity
+          style={[stylesObj.filterChip, selectedFilter === 'all' && stylesObj.filterChipActive]}
+          onPress={() => setSelectedFilter('all')}
+        >
+          <Text style={[
+            stylesObj.filterChipText,
+            selectedFilter === 'all' && stylesObj.filterChipTextActive
+          ]}>
+            Tümü ({activities.length})
+          </Text>
+        </TouchableOpacity>
 
-      {/* Sort Options */}
-      <View style={styles.sortContainer}>
-        <Text style={styles.sortLabel}>Sırala:</Text>
-        {sortOptions.map((option) => (
+        {activityTypes.map((type) => (
           <TouchableOpacity
-            key={option.id}
-            onPress={() => setSelectedSort(option.id)}
+            key={type.type}
+            style={[
+              stylesObj.filterChip,
+              selectedFilter === type.type && stylesObj.filterChipActive,
+              { borderColor: type.color }
+            ]}
+            onPress={() => setSelectedFilter(type.type)}
           >
-            <Text
-              style={[
-                styles.sortOption,
-                selectedSort === option.id && styles.activeSortOption,
-              ]}
-            >
-              {option.label}
+            <Ionicons 
+              name={type.icon} 
+              size={16} 
+              color={selectedFilter === type.type ? 'white' : type.color}
+              style={{ marginRight: spacing.xs }}
+            />
+            <Text style={[
+              stylesObj.filterChipText,
+              selectedFilter === type.type && stylesObj.filterChipTextActive
+            ]}>
+              {type.label}
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       {/* Activities List */}
-      {filteredActivities.length > 0 ? (
+      {groupedActivities.length > 0 ? (
         <FlatList
-          data={filteredActivities}
-          renderItem={renderActivity}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.activitiesList}
-          showsVerticalScrollIndicator={false}
+          data={groupedActivities}
+          keyExtractor={(item) => item[0]}
+          renderItem={({ item: [date, dateActivities] }) => (
+            <View style={stylesObj.dateGroup}>
+              <Text style={stylesObj.dateHeader}>{date}</Text>
+              {dateActivities.map((activity) => (
+                <View key={activity.id}>
+                  {renderActivityItem({ item: activity })}
+                </View>
+              ))}
+            </View>
+          )}
+          contentContainerStyle={stylesObj.listContent}
         />
       ) : (
-        <View style={styles.emptyState}>
-          <Ionicons name="document-text" size={64} color="#CBD5E0" />
-          <Text style={styles.emptyStateText}>
-            Henüz aktivite kaydedilmemiş
-          </Text>
-          <Text style={styles.emptyStateSubtext}>
-            İlk aktiviteyi eklemek için + butonuna tıklayın
+        <View style={stylesObj.emptyState}>
+          <Ionicons name="list-outline" size={64} color={colors.neutral[300]} />
+          <Text style={stylesObj.emptyStateTitle}>Henüz aktivite yok</Text>
+          <Text style={stylesObj.emptyStateDescription}>
+            {selectedFilter === 'all' 
+              ? 'Aktivite eklemek için + butonuna dokunun'
+              : 'Bu kategoride aktivite bulunmuyor'}
           </Text>
         </View>
       )}
+
+      {/* Add Button */}
+      <TouchableOpacity
+        style={stylesObj.addButton}
+        onPress={() => setModalVisible(true)}
+        activeOpacity={0.9}
+      >
+        <LinearGradient
+          colors={colors.gradients.primary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={stylesObj.addButtonGradient}
+        >
+          <Ionicons name="add" size={28} color="white" />
+        </LinearGradient>
+      </TouchableOpacity>
+
+      {/* Add Activity Modal */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={stylesObj.modalOverlay}>
+          <View style={stylesObj.modalContent}>
+            <View style={stylesObj.modalHeader}>
+              <Text style={stylesObj.modalTitle}>Aktivite Ekle</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color={colors.neutral[600]} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={stylesObj.modalLabel}>Aktivite Türü</Text>
+            <View style={stylesObj.activityTypeGrid}>
+              {activityTypes.map((type) => (
+                <TouchableOpacity
+                  key={type.type}
+                  style={[
+                    stylesObj.activityTypeCard,
+                    selectedActivityType === type.type && stylesObj.activityTypeCardActive
+                  ]}
+                  onPress={() => setSelectedActivityType(type.type)}
+                >
+                  <Ionicons 
+                    name={type.icon} 
+                    size={24} 
+                    color={selectedActivityType === type.type ? 'white' : type.color} 
+                  />
+                  <Text style={[
+                    stylesObj.activityTypeLabel,
+                    selectedActivityType === type.type && stylesObj.activityTypeLabelActive
+                  ]}>
+                    {type.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={stylesObj.modalLabel}>Notlar (Opsiyonel)</Text>
+            <TextInput
+              style={stylesObj.textInput}
+              value={activityNotes}
+              onChangeText={setActivityNotes}
+              placeholder="Aktivite hakkında notlarınız..."
+              placeholderTextColor={colors.neutral[400]}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+
+            <TouchableOpacity
+              style={stylesObj.saveButton}
+              onPress={handleAddActivity}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={colors.gradients.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={stylesObj.saveButtonGradient}
+              >
+                <Ionicons name="checkmark" size={20} color="white" />
+                <Text style={stylesObj.saveButtonText}>Kaydet</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = (colors: any, typography: any, spacing: any, borderRadius: any, shadows: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7FAFC',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FF6B9D',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: isDark ? colors.background.dark : colors.background.light,
   },
   filterContainer: {
+    maxHeight: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[200],
+  },
+  filterContent: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  filterChip: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 10,
-    padding: 4,
-  },
-  filterTab: {
-    flex: 1,
-    paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.neutral[300],
+    backgroundColor: isDark ? colors.background.cardDark : 'white',
   },
-  activeFilterTab: {
-    backgroundColor: '#FF6B9D',
+  filterChipActive: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
   },
-  filterText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#718096',
+  filterChipText: {
+    ...typography.labelLarge,
+    color: colors.text.secondary,
   },
-  activeFilterText: {
+  filterChipTextActive: {
     color: 'white',
+    fontWeight: '600',
   },
-  sortContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 15,
+  listContent: {
+    padding: spacing.lg,
   },
-  sortLabel: {
-    fontSize: 14,
-    color: '#718096',
-    marginRight: 10,
+  dateGroup: {
+    marginBottom: spacing['2xl'],
   },
-  sortOption: {
-    fontSize: 14,
-    color: '#667eea',
-    marginLeft: 15,
-  },
-  activeSortOption: {
-    color: '#FF6B9D',
-    fontWeight: 'bold',
-  },
-  activitiesList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+  dateHeader: {
+    ...typography.h5,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
   activityItem: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    alignItems: 'center',
+    backgroundColor: isDark ? colors.background.cardDark : 'white',
+    padding: spacing.lg,
+    borderRadius: borderRadius.xl,
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
   activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
-    marginRight: 15,
+    justifyContent: 'center',
+    marginRight: spacing.md,
   },
   activityContent: {
     flex: 1,
   },
-  activityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  activityType: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2D3748',
-  },
-  activityActor: {
-    fontSize: 12,
-    color: '#718096',
-    backgroundColor: '#F7FAFC',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  activityDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
+  activityTitle: {
+    ...typography.labelLarge,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
   },
   activityTime: {
-    fontSize: 14,
-    color: '#4A5568',
-  },
-  activityQuantity: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#FF6B9D',
-  },
-  activityDuration: {
-    fontSize: 12,
-    color: '#718096',
-    fontStyle: 'italic',
-    marginBottom: 5,
+    ...typography.bodySmall,
+    color: colors.text.secondary,
   },
   activityNotes: {
-    fontSize: 14,
-    color: '#4A5568',
-    lineHeight: 18,
+    ...typography.caption,
+    color: colors.text.tertiary,
+    marginTop: spacing.xs,
   },
-  moreButton: {
-    marginLeft: 10,
-    padding: 5,
+  activityStatus: {
+    marginLeft: spacing.sm,
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    justifyContent: 'center',
+    padding: spacing['4xl'],
   },
-  emptyStateText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4A5568',
-    marginTop: 20,
+  emptyStateTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  emptyStateDescription: {
+    ...typography.body,
+    color: colors.text.secondary,
     textAlign: 'center',
   },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: '#718096',
-    marginTop: 10,
-    textAlign: 'center',
-    lineHeight: 20,
+  addButton: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: spacing['2xl'],
+    borderRadius: borderRadius.full,
+    ...shadows.xl,
+  },
+  addButtonGradient: {
+    width: 64,
+    height: 64,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: isDark ? colors.background.cardDark : 'white',
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    padding: spacing['2xl'],
+    paddingBottom: spacing['4xl'],
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing['2xl'],
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  modalLabel: {
+    ...typography.labelLarge,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
+    marginTop: spacing.lg,
+  },
+  activityTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  activityTypeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 2,
+    borderColor: colors.neutral[200],
+    backgroundColor: isDark ? colors.background.dark : colors.neutral[50],
+    gap: spacing.sm,
+  },
+  activityTypeCardActive: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
+  },
+  activityTypeLabel: {
+    ...typography.label,
+    color: colors.text.primary,
+  },
+  activityTypeLabelActive: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  textInput: {
+    ...typography.body,
+    backgroundColor: isDark ? colors.background.dark : colors.neutral[50],
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    minHeight: 100,
+    color: colors.text.primary,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+  },
+  saveButton: {
+    marginTop: spacing['2xl'],
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  saveButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+  },
+  saveButtonText: {
+    ...typography.button,
+    color: 'white',
   },
 });
 
-export default ActivitiesScreen;
+export default React.memo(ActivitiesScreenNew);

@@ -1,5 +1,5 @@
-import ProfileScreenNew from '../../src/screens/ProfileScreenNew';
+import ProfileScreen from '../../src/screens/ProfileScreen';
 
 export default function ProfileTabScreen() {
-  return <ProfileScreenNew />;
+  return <ProfileScreen />;
 }

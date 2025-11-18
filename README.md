@@ -222,6 +222,28 @@ npx expo run:android
 - **File System**: Dışa aktarım ve paylaşım
 - **Secure Storage**: Hassas veri koruması
 
+## 📁 Proje Yapısı
+
+Proje temiz ve organize bir yapıya sahiptir:
+
+```
+DostAnne/
+├── app/                    # Expo Router navigasyon (17 tab ekranı)
+├── src/                    # Ana uygulama kodu
+│   ├── components/         # Yeniden kullanılabilir bileşenler
+│   ├── screens/            # Ekran implementasyonları (24 ekran)
+│   ├── hooks/              # Özel React hooks
+│   ├── store/              # Redux state yönetimi
+│   ├── services/           # İş mantığı servisleri
+│   └── ...                 # Diğer modüller
+├── components/             # UI temel bileşenler
+├── assets/                 # Statik dosyalar (görseller, rehberler)
+├── docs/                   # Tüm dokümantasyon
+└── __tests__/              # Test dosyaları
+```
+
+Detaylı yapı için: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+
 ## 📱 Platform Desteği
 
 - ✅ **iOS**: 12.0 ve üzeri

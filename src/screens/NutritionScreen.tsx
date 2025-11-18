@@ -3,937 +3,711 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
-  Alert,
-  StatusBar,
-  TextInput,
+  TouchableOpacity,
+  Image,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
-const NutritionScreen: React.FC = () => {
-  const dispatch = useDispatch();
-  const navigation = useNavigation<any>();
-  const [selectedTab, setSelectedTab] = useState<'schedule' | 'recipes' | 'allergies' | 'tips'>('schedule');
-  const [babyAge, setBabyAge] = useState('4');
+interface NutritionGuide {
+  id: string;
+  ageRange: string;
+  title: string;
+  description: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  tips: string[];
+}
 
-  // Simüle edilmiş ek gıda takvimi
-  const feedingSchedule = [
-    {
-      id: 1,
-      age: '4-6 Ay',
-      title: 'Ek Gıdaya Hazırlık',
-      description: 'Tek tek tanıtmaya başlayın',
-      allowedFoods: [
-        'Pirinç püresi',
-        'Sebzeli püreler (havuç, patates, kabak)',
-        'Meyve püreleri (elma, armut, muz)',
-        'Yoğurt',
-      ],
-      forbiddenFoods: [
-        'Bal',
-        'Sığır eti',
-        'Yumurta beyazı',
-        'Deniz ürünleri',
-        'Fındık/fıstık',
-      ],
-      frequency: 'Günde 1-2 kez',
-      quantity: '1-2 yemek kaşığı',
-    },
-    {
-      id: 2,
-      age: '6-8 Ay',
-      title: 'Ek Gıda Başlangıcı',
-      description: 'Yeni tatları keşfetme zamanı',
-      allowedFoods: [
-        'Tahıllar (pirinç, bulgur)',
-        'Tüm sebzeler',
-        'Tüm meyveler',
-        'Tavuk eti',
-        'Yumurta sarısı',
-        'Bakliyatlar',
-      ],
-      forbiddenFoods: [
-        'Bal',
-        'İnek sütü',
-        'Fındık/fıstık',
-        'Cips ve şekerleme',
-        'Çiğ sebze/meyve',
-      ],
-      frequency: 'Günde 3-4 kez',
-      quantity: '3-4 yemek kaşığı',
-    },
-    {
-      id: 3,
-      age: '8-12 Ay',
-      title: 'Çeşitlendirme Dönemi',
-      description: 'Aile sofrasına katılım',
-      allowedFoods: [
-        'Her şey denenebilir',
-        'Sığır eti',
-        'Yumurta tamı',
-        'Peynir',
-        'Makarna',
-        'Ekmek',
-      ],
-      forbiddenFoods: [
-        'Bal',
-        'Aşırı tuzlu ve baharatlı',
-        'Kola ve gazlı içecekler',
-        'Çok şekerli ürünler',
-      ],
-      frequency: 'Günde 5-6 kez',
-      quantity: '5-6 yemek kaşığı',
-    },
-  ];
+interface Recipe {
+  id: string;
+  name: string;
+  ageMonths: number;
+  prepTime: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  ingredients: string[];
+  instructions: string[];
+  nutritionFacts: {
+    calories: string;
+    protein: string;
+    carbs: string;
+  };
+}
 
-  // Bebek tarifleri
-  const babyRecipes = [
-    {
-      id: 1,
-      name: 'Elma Püresi',
-      age: '4+ Ay',
-      time: '10 dakika',
-      difficulty: 'Kolay',
-      ingredients: [
-        '1 adet elma',
-        '1/2 su bardağı su',
-        '1 çay kaşığı tarçın (isteğe bağlı)',
-      ],
-      instructions: [
-        'Elmayı yıkayıp kabuğunu soyun',
-        'Küçük küpler halinde doğrayın',
-        'Suyu ekleyerek haşlayın',
-        'Çatal ile ezerek püre haline getirin',
-        'Ilık olarak verin',
-      ],
-      nutrition: 'C vitamini, lif',
-      icon: 'leaf',
-      color: '#34C759',
-    },
-    {
-      id: 2,
-      name: 'Sebzeli Pirinç Püresi',
-      age: '5+ Ay',
-      time: '20 dakika',
-      difficulty: 'Orta',
-      ingredients: [
-        '3 yemek kaşığı pirinç',
-        '1 havuç',
-        '1 patates',
-        '2 su bardağı su',
-      ],
-      instructions: [
-        'Sebzeleri yıkayıp doğrayın',
-        'Pirinci yıkayın',
-        'Tüm malzemeleri su ile pişirin',
-        'Püre haline getirin',
-        'Ilık olarak servis yapın',
-      ],
-      nutrition: 'A vitamini, karbonhidrat',
-      icon: 'restaurant',
-      color: '#FF9500',
-    },
-    {
-      id: 3,
-      name: 'Tavuklu Bulgur Pilavı',
-      age: '8+ Ay',
-      time: '30 dakika',
-      difficulty: 'Orta',
-      ingredients: [
-        '100g tavuk fileto',
-        '1/2 su bardağı bulgur',
-        '1 soğan',
-        '1 domates',
-        '2 su bardağı su',
-      ],
-      instructions: [
-        'Tavugu haşlayıp didikleyin',
-        'Soğanı ve domatesi doğrayın',
-        'Tüm malzemeleri pişirin',
-        'Pilav kıvamına getirin',
-        'Ilık olarak verin',
-      ],
-      nutrition: 'Protein, demir',
-      icon: 'nutrition',
-      color: '#007AFF',
-    },
-    {
-      id: 4,
-      name: 'Muz Yoğurt',
-      age: '6+ Ay',
-      time: '5 dakika',
-      difficulty: 'Kolay',
-      ingredients: [
-        '1 adet olgun muz',
-        '3 yemek kaşığı yoğurt',
-        '1 çay kaşığı zeytinyağı',
-      ],
-      instructions: [
-        'Muzu çatal ile ezin',
-        'Yoğurt ile karıştırın',
-        'Zeytinyağı ekleyin',
-        'Hemen servis yapın',
-      ],
-      nutrition: 'Potasyum, kalsiyum',
-      icon: 'heart',
-      color: '#FF3B30',
-    },
-  ];
+const nutritionGuides: NutritionGuide[] = [
+  {
+    id: '1',
+    ageRange: '0-6 Ay',
+    title: 'Sadece Anne Sütü',
+    description: 'İlk 6 ay bebek için en ideal beslenme anne sütüdür',
+    icon: 'water-outline',
+    color: '#FF6B9D',
+    tips: [
+      'İlk 6 ay sadece anne sütü yeterlidir',
+      'Günde 8-12 kez emzirme önerilir',
+      'Su dahil hiçbir ek gıda verilmemelidir',
+      'Anne sütü bebek için en güvenli besindir',
+    ],
+  },
+  {
+    id: '2',
+    ageRange: '6-8 Ay',
+    title: 'Ek Gıdaya Başlama',
+    description: '6. aydan itibaren ek gıdalara geçiş başlar',
+    icon: 'nutrition-outline',
+    color: '#10B981',
+    tips: [
+      'Püre kıvamında yiyeceklerle başlayın',
+      'Tek tek yeni besinler tanıtın',
+      'Her yeni besin 3 gün aralıkla verilmeli',
+      'Anne sütüne devam edilmelidir',
+    ],
+  },
+  {
+    id: '3',
+    ageRange: '8-12 Ay',
+    title: 'Çeşitlilik Artırma',
+    description: 'Yiyecek çeşitliliği ve kıvam artırılır',
+    icon: 'restaurant-outline',
+    color: '#F59E0B',
+    tips: [
+      'Daha kalın kıvamlı yiyecekler verilebilir',
+      'Parmakla yenebilecek atıştırmalıklar ekleyin',
+      'Günde 3 ana öğün + 2 ara öğün',
+      'Aile yemeklerine adaptasyon başlar',
+    ],
+  },
+  {
+    id: '4',
+    ageRange: '12-24 Ay',
+    title: 'Aile Yemeklerine Geçiş',
+    description: 'Bebek aile sofrası yemeklerine adapte olur',
+    icon: 'people-outline',
+    color: '#8B5CF6',
+    tips: [
+      'Aile yemeklerinden pay alabilir',
+      'Tuz ve şeker minimal kullanılmalı',
+      'Kendi kendine yemeyi öğrenir',
+      'Günde 3 ana + 2-3 ara öğün',
+    ],
+  },
+];
 
-  // Alerji bilgileri
-  const allergyInfo = [
-    {
-      id: 1,
-      allergen: 'Yumurta',
-      symptoms: [
-        'Döküntü ve kaşıntı',
-        'Mide bulantısı',
-        'Nefes darlığı',
-        'Yüz ve dilde şişme',
-      ],
-      whatToDo: [
-        'Hemen yumurtayı kesin',
-        'Doktora başvurun',
-        'Acil durumda 112\'yi arayın',
-      ],
-      whenToTest: '8. aydan sonra',
-      icon: 'egg',
-      color: '#FF9500',
+const recipes: Recipe[] = [
+  {
+    id: '1',
+    name: 'Elma Püresi',
+    ageMonths: 6,
+    prepTime: '10 dk',
+    difficulty: 'easy',
+    ingredients: ['1 adet organik elma', '2 yemek kaşığı su'],
+    instructions: [
+      'Elmayı yıkayın, soyun ve küp şeklinde doğrayın',
+      'Küçük bir tencereye elmaları ve suyu ekleyin',
+      'Orta ateşte yumuşayana kadar pişirin (yaklaşık 10 dakika)',
+      'Blender ile püre haline getirin',
+      'Oda sıcaklığına soğutun ve servis edin',
+    ],
+    nutritionFacts: {
+      calories: '50 kcal',
+      protein: '0.3g',
+      carbs: '13g',
     },
-    {
-      id: 2,
-      allergen: 'Fındık/Fıstık',
-      symptoms: [
-        'Cilt döküntüsü',
-        'Boğazda kaşıntı',
-        'Mide ağrısı',
-        'Anafilaksi (ciddi reaksiyon)',
-      ],
-      whatToDo: [
-        'Hemen kesin',
-        'Acil doktor gerekli',
-        'Adrenalın iğne gerekebilir',
-      ],
-      whenToTest: '1 yaşından sonra',
-      icon: 'alert-circle',
-      color: '#FF3B30',
+  },
+  {
+    id: '2',
+    name: 'Havuç Püresi',
+    ageMonths: 6,
+    prepTime: '15 dk',
+    difficulty: 'easy',
+    ingredients: ['2 adet orta boy havuç', '3 yemek kaşığı su'],
+    instructions: [
+      'Havuçları yıkayın, soyun ve küçük parçalara bölün',
+      'Buharda veya haşlayarak yumuşatın',
+      'Blender ile püre haline getirin, gerekirse su ekleyin',
+      'Oda sıcaklığına soğutun',
+    ],
+    nutritionFacts: {
+      calories: '35 kcal',
+      protein: '0.8g',
+      carbs: '8g',
     },
-    {
-      id: 3,
-      allergen: 'Süt',
-      symptoms: [
-        'Gaz ve şişkinlik',
-        'İshal',
-        'Kusma',
-        'Cilt döküntüsü',
-      ],
-      whatToDo: [
-        'Süt ürünlerini kesin',
-        'Laktoz intoleransı testi',
-        'Diyisyen danışın',
-      ],
-      whenToTest: '1 yaşından sonra',
-      icon: 'water',
-      color: '#007AFF',
+  },
+  {
+    id: '3',
+    name: 'Kabak ve Pirinç Çorbası',
+    ageMonths: 7,
+    prepTime: '20 dk',
+    difficulty: 'easy',
+    ingredients: [
+      '1 dilim kabak',
+      '2 yemek kaşığı pirinç',
+      '1 su bardağı su',
+      '1 tatlı kaşığı zeytinyağı',
+    ],
+    instructions: [
+      'Pirinci yıkayın ve suda bekletin',
+      'Kabağı küp şeklinde doğrayın',
+      'Tüm malzemeleri tencereye ekleyin',
+      'Yumuşayana kadar pişirin (15-20 dakika)',
+      'Blender ile çorba kıvamına getirin',
+    ],
+    nutritionFacts: {
+      calories: '80 kcal',
+      protein: '2g',
+      carbs: '15g',
     },
-  ];
-
-  // Beslenme ipuçları
-  const nutritionTips = [
-    {
-      id: 1,
-      title: 'Yeni Gıda Tanıtma',
-      description: 'Her yeni gıdayı 3 gün arayla tanıtın, alerjiyi izleyin',
-      icon: 'time',
-      color: '#34C759',
+  },
+  {
+    id: '4',
+    name: 'Muz-Avokado Püresi',
+    ageMonths: 8,
+    prepTime: '5 dk',
+    difficulty: 'easy',
+    ingredients: ['1/2 olgun muz', '1/4 avokado', '1 yemek kaşığı anne sütü (opsiyonel)'],
+    instructions: [
+      'Muz ve avokadoyu ezin',
+      'İyi karıştırın',
+      'Gerekirse anne sütü ekleyerek kıvam ayarlayın',
+      'Hemen servis edin',
+    ],
+    nutritionFacts: {
+      calories: '110 kcal',
+      protein: '1.5g',
+      carbs: '18g',
     },
-    {
-      id: 2,
-      title: 'Püre Kıvamı',
-      description: 'Başlangıçta çok kıvamlı, zamanla daha katı hale getirin',
-      icon: 'restaurant',
-      color: '#FF9500',
+  },
+  {
+    id: '5',
+    name: 'Yoğurtlu Meyve Salatası',
+    ageMonths: 10,
+    prepTime: '10 dk',
+    difficulty: 'easy',
+    ingredients: [
+      '3 yemek kaşığı süzme yoğurt',
+      '1/2 muz',
+      '3-4 çilek',
+      '1 tatlı kaşığı kayısı',
+    ],
+    instructions: [
+      'Meyveleri küçük parçalara bölün',
+      'Yoğurt ile karıştırın',
+      'Kayısıyı üzerine ekleyin',
+      'Hemen servis edin veya buzdolabında muhafaza edin',
+    ],
+    nutritionFacts: {
+      calories: '95 kcal',
+      protein: '4g',
+      carbs: '18g',
     },
-    {
-      id: 3,
-      title: 'Sıcaklık Kontrolü',
-      description: 'Yiyeceklerin sıcaklığını kontrol edin, yakabilecek kadar sıcak olmasın',
-      icon: 'thermometer',
-      color: '#FF3B30',
-    },
-    {
-      id: 4,
-      title: 'Su İhtiyacı',
-      description: '6 aydan sonra yan bardaktan su vermeye başlayın',
-      icon: 'water',
-      color: '#007AFF',
-    },
-    {
-      id: 5,
-      title: 'Vitamin D',
-      description: 'Doktor önerisine göre vitamin D damlası verin',
-      icon: 'sunny',
-      color: '#AF52DE',
-    },
-    {
-      id: 6,
-      title: 'Tuz ve Şeker',
-      description: '1 yaşına kadar tuz ve şeker eklemeyin',
-      icon: 'warning',
-      color: '#8E8E93',
-    },
-  ];
+  },
+];
 
-  const ScheduleCard = ({ schedule }: any) => (
-    <View style={styles.scheduleCard}>
-      <View style={styles.scheduleHeader}>
-        <View style={styles.ageBadge}>
-          <Text style={styles.ageText}>{schedule.age}</Text>
-        </View>
-        <Text style={styles.scheduleTitle}>{schedule.title}</Text>
-      </View>
-      <Text style={styles.scheduleDescription}>{schedule.description}</Text>
-      
-      <View style={styles.scheduleSection}>
-        <Text style={styles.sectionLabel}>✅ İzin Verilen Gıdalar</Text>
-        {schedule.allowedFoods.map((food: string, index: number) => (
-          <View key={index} style={styles.foodItem}>
-            <Ionicons name="checkmark-circle" size={16} color="#34C759" />
-            <Text style={styles.foodText}>{food}</Text>
-          </View>
-        ))}
-      </View>
+export default function NutritionScreenNew() {
+  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const [selectedTab, setSelectedTab] = useState<'guides' | 'recipes'>('guides');
+  const [expandedGuide, setExpandedGuide] = useState<string | null>(null);
+  const [expandedRecipe, setExpandedRecipe] = useState<string | null>(null);
 
-      <View style={styles.scheduleSection}>
-        <Text style={styles.sectionLabel}>❌ Yasaklı Gıdalar</Text>
-        {schedule.forbiddenFoods.map((food: string, index: number) => (
-          <View key={index} style={styles.foodItem}>
-            <Ionicons name="close-circle" size={16} color="#FF3B30" />
-            <Text style={styles.foodText}>{food}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.scheduleFooter}>
-        <View style={styles.footerItem}>
-          <Text style={styles.footerLabel}>Sıklık:</Text>
-          <Text style={styles.footerValue}>{schedule.frequency}</Text>
-        </View>
-        <View style={styles.footerItem}>
-          <Text style={styles.footerLabel}>Miktar:</Text>
-          <Text style={styles.footerValue}>{schedule.quantity}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  const RecipeCard = ({ recipe }: any) => (
-    <View style={styles.recipeCard}>
-      <View style={styles.recipeHeader}>
-        <View style={styles.recipeInfo}>
-          <Ionicons name={recipe.icon as any} size={24} color={recipe.color} />
-          <View style={styles.recipeDetails}>
-            <Text style={styles.recipeName}>{recipe.name}</Text>
-            <View style={styles.recipeMeta}>
-              <Text style={styles.recipeAge}>{recipe.age}</Text>
-              <Text style={styles.recipeTime}>⏱ {recipe.time}</Text>
-              <Text style={styles.recipeDifficulty}>{recipe.difficulty}</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.recipeSection}>
-        <Text style={styles.sectionLabel}>Malzemeler:</Text>
-        {recipe.ingredients.map((ingredient: string, index: number) => (
-          <Text key={index} style={styles.ingredientText}>• {ingredient}</Text>
-        ))}
-      </View>
-
-      <View style={styles.recipeSection}>
-        <Text style={styles.sectionLabel}>Yapılışı:</Text>
-        {recipe.instructions.map((instruction: string, index: number) => (
-          <View key={index} style={styles.instructionItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>{index + 1}</Text>
-            </View>
-            <Text style={styles.instructionText}>{instruction}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.nutritionBadge}>
-        <Ionicons name="nutrition" size={16} color="#34C759" />
-        <Text style={styles.nutritionText}>{recipe.nutrition}</Text>
-      </View>
-    </View>
-  );
-
-  const AllergyCard = ({ allergy }: any) => (
-    <View style={styles.allergyCard}>
-      <View style={styles.allergyHeader}>
-        <Ionicons name={allergy.icon as any} size={24} color={allergy.color} />
-        <View style={styles.allergyInfo}>
-          <Text style={styles.allergyName}>{allergy.allergen}</Text>
-          <Text style={styles.allergyTest}>Test zamanı: {allergy.whenToTest}</Text>
-        </View>
-      </View>
-
-      <View style={styles.allergySection}>
-        <Text style={styles.sectionLabel}>Belirtiler:</Text>
-        {allergy.symptoms.map((symptom: string, index: number) => (
-          <View key={index} style={styles.symptomItem}>
-            <Ionicons name="warning" size={16} color="#FF9500" />
-            <Text style={styles.symptomText}>{symptom}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.allergySection}>
-        <Text style={styles.sectionLabel}>Ne Yapmalı:</Text>
-        {allergy.whatToDo.map((action: string, index: number) => (
-          <View key={index} style={styles.actionItem}>
-            <Ionicons name="medical" size={16} color="#007AFF" />
-            <Text style={styles.actionText}>{action}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
-  const NutritionTipCard = ({ tip }: any) => (
-    <View style={styles.tipCard}>
-      <View style={styles.tipHeader}>
-        <Ionicons name={tip.icon as any} size={24} color={tip.color} />
-        <Text style={styles.tipTitle}>{tip.title}</Text>
-      </View>
-      <Text style={styles.tipDescription}>{tip.description}</Text>
-    </View>
-  );
+  const getDifficultyInfo = (difficulty: Recipe['difficulty']) => {
+    switch (difficulty) {
+      case 'easy':
+        return { label: 'Kolay', color: colors.success[500] };
+      case 'medium':
+        return { label: 'Orta', color: colors.warning[500] };
+      case 'hard':
+        return { label: 'Zor', color: colors.error[500] };
+    }
+  };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      
-      <View style={styles.header}>
-        <Text style={styles.title}>Beslenme Rehberi</Text>
-        <Text style={styles.subtitle}>Ek gıda ve sağlıklı beslenme</Text>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+      {/* Header */}
+      <LinearGradient
+        colors={['#10B981', '#059669']}
+        style={[styles.header, shadows.medium]}
+      >
+        <Ionicons name="nutrition" size={48} color="white" />
+        <Text style={[styles.headerTitle, typography.h1, { color: 'white' }]}>
+          Beslenme Rehberi
+        </Text>
+        <Text style={[styles.headerSubtitle, typography.body, { color: 'white' }]}>
+          Sağlıklı gelişim için beslenme önerileri
+        </Text>
+      </LinearGradient>
 
-      <View style={styles.ageSelector}>
-        <Text style={styles.ageLabel}>Bebeğinizin yaşı:</Text>
-        <View style={styles.ageButtons}>
-          {['4', '6', '8', '12'].map((age) => (
-            <TouchableOpacity
-              key={age}
-              style={[
-                styles.ageButton,
-                babyAge === age && styles.ageButtonActive,
-              ]}
-              onPress={() => setBabyAge(age)}
-            >
-              <Text style={[
-                styles.ageButtonText,
-                babyAge === age && styles.ageButtonTextActive,
-              ]}>
-                {age} ay
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.tabContainer}>
+      {/* Tabs */}
+      <View style={styles.tabs}>
         <TouchableOpacity
-          style={[styles.tab, selectedTab === 'schedule' && styles.activeTab]}
-          onPress={() => setSelectedTab('schedule')}
+          style={[
+            styles.tab,
+            selectedTab === 'guides' && [styles.tabActive, { borderBottomColor: colors.success[500] }],
+          ]}
+          onPress={() => setSelectedTab('guides')}
         >
-          <Ionicons 
-            name="calendar" 
-            size={20} 
-            color={selectedTab === 'schedule' ? '#007AFF' : '#8E8E93'} 
+          <Ionicons
+            name="book"
+            size={24}
+            color={selectedTab === 'guides' ? colors.success[500] : colors.neutral[400]}
           />
-          <Text style={[styles.tabText, selectedTab === 'schedule' && styles.activeTabText]}>
-            Takvim
+          <Text
+            style={[
+              styles.tabText,
+              typography.bodyBold,
+              { color: selectedTab === 'guides' ? colors.success[500] : colors.neutral[600] },
+            ]}
+          >
+            Rehber
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={[styles.tab, selectedTab === 'recipes' && styles.activeTab]}
+          style={[
+            styles.tab,
+            selectedTab === 'recipes' && [styles.tabActive, { borderBottomColor: colors.success[500] }],
+          ]}
           onPress={() => setSelectedTab('recipes')}
         >
-          <Ionicons 
-            name="restaurant" 
-            size={20} 
-            color={selectedTab === 'recipes' ? '#007AFF' : '#8E8E93'} 
+          <Ionicons
+            name="restaurant"
+            size={24}
+            color={selectedTab === 'recipes' ? colors.success[500] : colors.neutral[400]}
           />
-          <Text style={[styles.tabText, selectedTab === 'recipes' && styles.activeTabText]}>
+          <Text
+            style={[
+              styles.tabText,
+              typography.bodyBold,
+              { color: selectedTab === 'recipes' ? colors.success[500] : colors.neutral[600] },
+            ]}
+          >
             Tarifler
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'allergies' && styles.activeTab]}
-          onPress={() => setSelectedTab('allergies')}
-        >
-          <Ionicons 
-            name="alert-circle" 
-            size={20} 
-            color={selectedTab === 'allergies' ? '#007AFF' : '#8E8E93'} 
-          />
-          <Text style={[styles.tabText, selectedTab === 'allergies' && styles.activeTabText]}>
-            Alerjiler
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'tips' && styles.activeTab]}
-          onPress={() => setSelectedTab('tips')}
-        >
-          <Ionicons 
-            name="bulb" 
-            size={20} 
-            color={selectedTab === 'tips' ? '#007AFF' : '#8E8E93'} 
-          />
-          <Text style={[styles.tabText, selectedTab === 'tips' && styles.activeTabText]}>
-            İpuçları
-          </Text>
-        </TouchableOpacity>
       </View>
 
-      {selectedTab === 'schedule' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📅 Ek Gıda Takvimi</Text>
-          {feedingSchedule.map((schedule) => (
-            <ScheduleCard key={schedule.id} schedule={schedule} />
-          ))}
-        </View>
-      )}
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {selectedTab === 'guides' ? (
+          <>
+            {/* Introduction Card */}
+            <View style={[styles.introCard, { backgroundColor: colors.success[50] }]}>
+              <Ionicons name="information-circle" size={32} color={colors.success[600]} />
+              <Text style={[styles.introText, typography.body, { color: colors.success[700] }]}>
+                Bebeğinizin yaşına uygun beslenme rehberini inceleyin. Her bebeğin gelişimi farklıdır, öneriler için
+                mutlaka doktorunuza danışın.
+              </Text>
+            </View>
 
-      {selectedTab === 'recipes' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🍳 Bebek Tarifleri</Text>
-          {babyRecipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
-        </View>
-      )}
+            {/* Nutrition Guides */}
+            {nutritionGuides.map((guide) => (
+              <TouchableOpacity
+                key={guide.id}
+                style={[styles.guideCard, { backgroundColor: 'white' }, shadows.small]}
+                onPress={() => setExpandedGuide(expandedGuide === guide.id ? null : guide.id)}
+              >
+                <View style={styles.guideHeader}>
+                  <View style={[styles.guideIcon, { backgroundColor: guide.color + '20' }]}>
+                    <Ionicons name={guide.icon} size={32} color={guide.color} />
+                  </View>
+                  <View style={styles.guideHeaderText}>
+                    <Text style={[styles.guideAgeRange, typography.caption, { color: guide.color }]}>
+                      {guide.ageRange}
+                    </Text>
+                    <Text style={[styles.guideTitle, typography.h3, { color: colors.text }]}>
+                      {guide.title}
+                    </Text>
+                    <Text style={[styles.guideDescription, typography.body, { color: colors.textSecondary }]}>
+                      {guide.description}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name={expandedGuide === guide.id ? 'chevron-up' : 'chevron-down'}
+                    size={24}
+                    color={colors.neutral[400]}
+                  />
+                </View>
 
-      {selectedTab === 'allergies' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚠️ Alerji Bilgileri</Text>
-          {allergyInfo.map((allergy) => (
-            <AllergyCard key={allergy.id} allergy={allergy} />
-          ))}
-        </View>
-      )}
+                {expandedGuide === guide.id && (
+                  <View style={[styles.guideTips, { borderTopColor: colors.neutral[200] }]}>
+                    <Text style={[styles.guideTipsTitle, typography.bodyBold, { color: colors.text }]}>
+                      Öneriler:
+                    </Text>
+                    {guide.tips.map((tip, index) => (
+                      <View key={index} style={styles.tipItem}>
+                        <View style={[styles.tipBullet, { backgroundColor: guide.color }]} />
+                        <Text style={[styles.tipText, typography.body, { color: colors.text }]}>
+                          {tip}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
 
-      {selectedTab === 'tips' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 Beslenme İpuçları</Text>
-          {nutritionTips.map((tip) => (
-            <NutritionTipCard key={tip.id} tip={tip} />
-          ))}
-        </View>
-      )}
+            {/* Important Note */}
+            <View style={[styles.noteCard, { backgroundColor: colors.warning[50] }]}>
+              <Ionicons name="warning" size={24} color={colors.warning[600]} />
+              <Text style={[styles.noteText, typography.caption, { color: colors.warning[700] }]}>
+                Bal 1 yaşından önce verilmemelidir. Alerji riski taşıyan besinler dikkatli şekilde tanıtılmalıdır.
+                Tuz ve şeker 1 yaşına kadar kullanılmamalıdır.
+              </Text>
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Recipe Filter Info */}
+            <View style={[styles.filterCard, { backgroundColor: 'white' }, shadows.small]}>
+              <Text style={[styles.filterTitle, typography.h4, { color: colors.text }]}>
+                Kolay ve Sağlıklı Tarifler
+              </Text>
+              <Text style={[styles.filterText, typography.body, { color: colors.textSecondary }]}>
+                Yaş grubuna uygun, besleyici tarifler
+              </Text>
+            </View>
 
-      <View style={styles.infoSection}>
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
-          <Text style={styles.infoText}>
-            Her bebek farklıdır. Bu bilgiler genel rehberlik içindir. Beslenme ile ilgili endişeleriniz için mutlaka doktorunuza danışın.
-          </Text>
-        </View>
-      </View>
-    </ScrollView>
+            {/* Recipes */}
+            {recipes.map((recipe) => {
+              const difficultyInfo = getDifficultyInfo(recipe.difficulty);
+              return (
+                <TouchableOpacity
+                  key={recipe.id}
+                  style={[styles.recipeCard, { backgroundColor: 'white' }, shadows.small]}
+                  onPress={() => setExpandedRecipe(expandedRecipe === recipe.id ? null : recipe.id)}
+                >
+                  <View style={styles.recipeHeader}>
+                    <View style={styles.recipeHeaderTop}>
+                      <Text style={[styles.recipeName, typography.h3, { color: colors.text }]}>
+                        {recipe.name}
+                      </Text>
+                      <Ionicons
+                        name={expandedRecipe === recipe.id ? 'chevron-up' : 'chevron-down'}
+                        size={24}
+                        color={colors.neutral[400]}
+                      />
+                    </View>
+
+                    <View style={styles.recipeMetadata}>
+                      <View style={styles.recipeMetaItem}>
+                        <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                        <Text style={[styles.recipeMetaText, typography.caption, { color: colors.textSecondary }]}>
+                          {recipe.prepTime}
+                        </Text>
+                      </View>
+
+                      <View style={styles.recipeMetaItem}>
+                        <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+                        <Text style={[styles.recipeMetaText, typography.caption, { color: colors.textSecondary }]}>
+                          {recipe.ageMonths}+ ay
+                        </Text>
+                      </View>
+
+                      <View style={[styles.recipeDifficulty, { backgroundColor: difficultyInfo.color + '20' }]}>
+                        <Text style={[styles.recipeDifficultyText, { color: difficultyInfo.color }]}>
+                          {difficultyInfo.label}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {expandedRecipe === recipe.id && (
+                    <View style={[styles.recipeDetails, { borderTopColor: colors.neutral[200] }]}>
+                      {/* Ingredients */}
+                      <View style={styles.recipeSection}>
+                        <Text style={[styles.recipeSectionTitle, typography.bodyBold, { color: colors.text }]}>
+                          Malzemeler:
+                        </Text>
+                        {recipe.ingredients.map((ingredient, index) => (
+                          <View key={index} style={styles.recipeListItem}>
+                            <View style={[styles.recipeBullet, { backgroundColor: colors.success[500] }]} />
+                            <Text style={[styles.recipeListText, typography.body, { color: colors.text }]}>
+                              {ingredient}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+
+                      {/* Instructions */}
+                      <View style={styles.recipeSection}>
+                        <Text style={[styles.recipeSectionTitle, typography.bodyBold, { color: colors.text }]}>
+                          Hazırlanışı:
+                        </Text>
+                        {recipe.instructions.map((instruction, index) => (
+                          <View key={index} style={styles.recipeStepItem}>
+                            <View style={[styles.recipeStepNumber, { backgroundColor: colors.success[500] }]}>
+                              <Text style={[styles.recipeStepNumberText, { color: 'white' }]}>
+                                {index + 1}
+                              </Text>
+                            </View>
+                            <Text style={[styles.recipeStepText, typography.body, { color: colors.text }]}>
+                              {instruction}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+
+                      {/* Nutrition Facts */}
+                      <View style={[styles.nutritionFacts, { backgroundColor: colors.success[50] }]}>
+                        <Text style={[styles.nutritionTitle, typography.bodyBold, { color: colors.success[700] }]}>
+                          Besin Değerleri:
+                        </Text>
+                        <View style={styles.nutritionGrid}>
+                          <View style={styles.nutritionItem}>
+                            <Text style={[styles.nutritionLabel, typography.caption, { color: colors.success[600] }]}>
+                              Kalori
+                            </Text>
+                            <Text style={[styles.nutritionValue, typography.bodyBold, { color: colors.success[700] }]}>
+                              {recipe.nutritionFacts.calories}
+                            </Text>
+                          </View>
+                          <View style={styles.nutritionItem}>
+                            <Text style={[styles.nutritionLabel, typography.caption, { color: colors.success[600] }]}>
+                              Protein
+                            </Text>
+                            <Text style={[styles.nutritionValue, typography.bodyBold, { color: colors.success[700] }]}>
+                              {recipe.nutritionFacts.protein}
+                            </Text>
+                          </View>
+                          <View style={styles.nutritionItem}>
+                            <Text style={[styles.nutritionLabel, typography.caption, { color: colors.success[600] }]}>
+                              Karbonhidrat
+                            </Text>
+                            <Text style={[styles.nutritionValue, typography.bodyBold, { color: colors.success[700] }]}>
+                              {recipe.nutritionFacts.carbs}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    padding: 24,
+    paddingTop: 16,
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2D3436',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#636E72',
-  },
-  ageSelector: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
-  },
-  ageLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 12,
-  },
-  ageButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  ageButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-  },
-  ageButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  ageButtonText: {
-    fontSize: 14,
-    color: '#636E72',
+  headerTitle: {
+    marginTop: 12,
     textAlign: 'center',
-    fontWeight: '500',
   },
-  ageButtonTextActive: {
-    color: 'white',
+  headerSubtitle: {
+    marginTop: 8,
+    textAlign: 'center',
+    opacity: 0.9,
   },
-  tabContainer: {
+  tabs: {
     flexDirection: 'row',
     backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 12,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
+    gap: 8,
+    paddingVertical: 16,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
   },
-  activeTab: {
-    backgroundColor: '#E3F2FD',
+  tabActive: {
+    borderBottomWidth: 3,
   },
-  tabText: {
-    fontSize: 11,
-    color: '#8E8E93',
-    marginLeft: 4,
-    fontWeight: '500',
+  tabText: {},
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
-  activeTabText: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 16,
-  },
-  scheduleCard: {
-    backgroundColor: 'white',
+  introCard: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
     padding: 16,
     borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    alignItems: 'flex-start',
   },
-  scheduleHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  ageBadge: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  ageText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'white',
-  },
-  scheduleTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3436',
-  },
-  scheduleDescription: {
-    fontSize: 14,
-    color: '#636E72',
-    marginBottom: 12,
-  },
-  scheduleSection: {
-    marginBottom: 12,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 8,
-  },
-  foodItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  foodText: {
-    fontSize: 14,
-    color: '#2D3436',
-    marginLeft: 8,
-  },
-  scheduleFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-  },
-  footerItem: {
+  introText: {
     flex: 1,
   },
-  footerLabel: {
-    fontSize: 12,
-    color: '#636E72',
-    marginBottom: 2,
+  guideCard: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 16,
   },
-  footerValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2D3436',
+  guideHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  guideIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guideHeaderText: {
+    flex: 1,
+    gap: 4,
+  },
+  guideAgeRange: {
+    fontWeight: '700',
+  },
+  guideTitle: {},
+  guideDescription: {},
+  guideTips: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    gap: 12,
+  },
+  guideTipsTitle: {
+    marginBottom: 8,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  tipBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 8,
+  },
+  tipText: {
+    flex: 1,
+  },
+  noteCard: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'flex-start',
+  },
+  noteText: {
+    flex: 1,
+  },
+  filterCard: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 16,
+  },
+  filterTitle: {},
+  filterText: {
+    marginTop: 4,
   },
   recipeCard: {
-    backgroundColor: 'white',
+    marginTop: 16,
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 16,
   },
   recipeHeader: {
-    marginBottom: 12,
+    gap: 12,
   },
-  recipeInfo: {
+  recipeHeaderTop: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  recipeName: {},
+  recipeMetadata: {
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'center',
+  },
+  recipeMetaItem: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+  },
+  recipeMetaText: {},
+  recipeDifficulty: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  recipeDifficultyText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   recipeDetails: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  recipeName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 4,
-  },
-  recipeMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  recipeAge: {
-    fontSize: 12,
-    color: '#34C759',
-    fontWeight: '500',
-  },
-  recipeTime: {
-    fontSize: 12,
-    color: '#636E72',
-  },
-  recipeDifficulty: {
-    fontSize: 12,
-    color: '#FF9500',
-    fontWeight: '500',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    gap: 20,
   },
   recipeSection: {
-    marginBottom: 12,
+    gap: 12,
   },
-  ingredientText: {
-    fontSize: 14,
-    color: '#2D3436',
-    marginBottom: 2,
-  },
-  instructionItem: {
+  recipeSectionTitle: {},
+  recipeListItem: {
     flexDirection: 'row',
+    gap: 12,
     alignItems: 'flex-start',
-    marginBottom: 6,
   },
-  stepNumber: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#007AFF',
+  recipeBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 8,
+  },
+  recipeListText: {
+    flex: 1,
+  },
+  recipeStepItem: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  recipeStepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-    marginTop: 2,
   },
-  stepNumberText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: 'white',
+  recipeStepNumberText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
-  instructionText: {
+  recipeStepText: {
     flex: 1,
-    fontSize: 14,
-    color: '#2D3436',
-    lineHeight: 18,
   },
-  nutritionBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E8F5E8',
-    padding: 8,
-    borderRadius: 8,
-  },
-  nutritionText: {
-    fontSize: 14,
-    color: '#34C759',
-    fontWeight: '500',
-    marginLeft: 4,
-  },
-  allergyCard: {
-    backgroundColor: 'white',
+  nutritionFacts: {
     padding: 16,
     borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  allergyHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  nutritionTitle: {
     marginBottom: 12,
   },
-  allergyInfo: {
+  nutritionGrid: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  nutritionItem: {
     flex: 1,
-    marginLeft: 12,
-  },
-  allergyName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginBottom: 4,
-  },
-  allergyTest: {
-    fontSize: 14,
-    color: '#636E72',
-  },
-  allergySection: {
-    marginBottom: 12,
-  },
-  symptomItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 4,
   },
-  symptomText: {
-    fontSize: 14,
-    color: '#2D3436',
-    marginLeft: 8,
-  },
-  actionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  actionText: {
-    fontSize: 14,
-    color: '#2D3436',
-    marginLeft: 8,
-  },
-  tipCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tipHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  tipTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3436',
-    marginLeft: 8,
-  },
-  tipDescription: {
-    fontSize: 14,
-    color: '#636E72',
-    lineHeight: 20,
-  },
-  infoSection: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#E3F2FD',
-    borderRadius: 12,
-    alignItems: 'flex-start',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1565C0',
-    marginLeft: 8,
-    lineHeight: 20,
-  },
+  nutritionLabel: {},
+  nutritionValue: {},
 });
-
-export default NutritionScreen;

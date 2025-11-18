@@ -1,5 +1,5 @@
-import ActivitiesScreenNew from '../../src/screens/ActivitiesScreenNew';
+import ActivitiesScreen from '../../src/screens/ActivitiesScreen';
 
 export default function ActivitiesTabScreen() {
-  return <ActivitiesScreenNew />;
+  return <ActivitiesScreen />;
 }

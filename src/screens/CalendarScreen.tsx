@@ -1,459 +1,775 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 
-const { width } = Dimensions.get('window');
+interface Appointment {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  type: 'doctor' | 'vaccine' | 'checkup' | 'other';
+  notes?: string;
+  completed: boolean;
+}
 
-const CalendarScreen = () => {
-  const { activities, baby } = useSelector((state: RootState) => state.activities);
-  const [selectedDate, setSelectedDate] = React.useState(new Date());
-  const [viewMode, setViewMode] = React.useState<'month' | 'week' | 'day'>('month');
+// Mock appointments - in real app, this would come from database
+const mockAppointments: Appointment[] = [
+  {
+    id: '1',
+    title: 'Doktor Kontrolü',
+    date: '2024-11-20',
+    time: '14:00',
+    type: 'doctor',
+    notes: 'Genel sağlık kontrolü',
+    completed: false,
+  },
+  {
+    id: '2',
+    title: 'Aşı Randevusu - KPA',
+    date: '2024-11-25',
+    time: '10:30',
+    type: 'vaccine',
+    notes: '2. doz KPA aşısı',
+    completed: false,
+  },
+  {
+    id: '3',
+    title: 'Boy-Kilo Ölçümü',
+    date: '2024-12-01',
+    time: '11:00',
+    type: 'checkup',
+    completed: false,
+  },
+];
 
-  // Generate calendar days
-  const generateCalendarDays = () => {
+export default function CalendarScreenNew() {
+  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
+  const activities = useSelector((state: RootState) => state.database.activities);
+
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
+
+  // New appointment form state
+  const [newAppointment, setNewAppointment] = useState<Partial<Appointment>>({
+    title: '',
+    date: '',
+    time: '',
+    type: 'doctor',
+    notes: '',
+  });
+
+  // Get current month calendar data
+  const calendarData = useMemo(() => {
     const year = selectedDate.getFullYear();
     const month = selectedDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days = [];
 
-    // Empty cells for days before month starts
-    for (let i = 0; i < firstDay; i++) {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days: (number | null)[] = [];
+
+    // Add empty slots for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
 
-    // Days of the month
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
+    // Add days of month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
     }
 
-    return days;
+    return { year, month, days, monthName: firstDay.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }) };
+  }, [selectedDate]);
+
+  // Get appointments for selected date
+  const selectedDateAppointments = useMemo(() => {
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    return appointments.filter((apt) => apt.date === dateStr);
+  }, [selectedDate, appointments]);
+
+  // Get activities for selected date
+  const selectedDateActivities = useMemo(() => {
+    const dateStr = selectedDate.toDateString();
+    return activities.filter((a) => new Date(a.startTime).toDateString() === dateStr);
+  }, [selectedDate, activities]);
+
+  // Check if a date has appointments
+  const hasAppointments = (day: number) => {
+    const dateStr = new Date(calendarData.year, calendarData.month, day).toISOString().split('T')[0];
+    return appointments.some((apt) => apt.date === dateStr);
   };
 
-  const calendarDays = generateCalendarDays();
-
-  // Get activities for a specific date
-  const getActivitiesForDate = (day: number) => {
-    const date = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
-    const dateString = date.toDateString();
-    
-    return activities.filter(activity => {
-      const activityDate = new Date(activity.startTime).toDateString();
-      return activityDate === dateString;
-    });
+  // Check if a date has activities
+  const hasActivities = (day: number) => {
+    const dateStr = new Date(calendarData.year, calendarData.month, day).toDateString();
+    return activities.some((a) => new Date(a.startTime).toDateString() === dateStr);
   };
 
-  // Navigate months
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    if (direction === 'prev') {
-      newDate.setMonth(newDate.getMonth() - 1);
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1);
+  // Navigate month
+  const goToPreviousMonth = () => {
+    setSelectedDate(new Date(calendarData.year, calendarData.month - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setSelectedDate(new Date(calendarData.year, calendarData.month + 1, 1));
+  };
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  // Handle day selection
+  const handleDayPress = (day: number) => {
+    setSelectedDate(new Date(calendarData.year, calendarData.month, day));
+  };
+
+  // Add appointment
+  const handleAddAppointment = () => {
+    if (!newAppointment.title || !newAppointment.date || !newAppointment.time) {
+      Alert.alert('Hata', 'Lütfen tüm zorunlu alanları doldurun');
+      return;
     }
-    setSelectedDate(newDate);
+
+    const appointment: Appointment = {
+      id: Date.now().toString(),
+      title: newAppointment.title!,
+      date: newAppointment.date!,
+      time: newAppointment.time!,
+      type: newAppointment.type as Appointment['type'],
+      notes: newAppointment.notes,
+      completed: false,
+    };
+
+    setAppointments([...appointments, appointment]);
+    setNewAppointment({ title: '', date: '', time: '', type: 'doctor', notes: '' });
+    setShowAddModal(false);
+    Alert.alert('Başarılı', 'Randevu eklendi');
   };
 
-  // Get today's activities
-  const getTodayActivities = () => {
-    const today = new Date().toDateString();
-    return activities.filter(activity => {
-      const activityDate = new Date(activity.startTime).toDateString();
-      return activityDate === today;
-    });
-  };
-
-  const weekDays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-  const monthNames = [
-    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-  ];
-
-  const todayActivities = getTodayActivities();
-  const isToday = (day: number) => {
-    const today = new Date();
-    return (
-      day === today.getDate() &&
-      selectedDate.getMonth() === today.getMonth() &&
-      selectedDate.getFullYear() === today.getFullYear()
+  // Toggle appointment completion
+  const toggleAppointmentComplete = (id: string) => {
+    setAppointments(
+      appointments.map((apt) =>
+        apt.id === id ? { ...apt, completed: !apt.completed } : apt
+      )
     );
   };
 
-  const getActivityIcon = (type: string) => {
+  // Get appointment icon and color
+  const getAppointmentStyle = (type: Appointment['type']) => {
     switch (type) {
-      case 'feeding': return 'restaurant';
-      case 'sleep': return 'bed';
-      case 'diaper': return 'color-wash';
-      case 'medication': return 'medkit';
-      case 'note': return 'create';
-      default: return 'help';
-    }
-  };
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'feeding': return '#FF6B9D';
-      case 'sleep': return '#9F7AEA';
-      case 'diaper': return '#48BB78';
-      case 'medication': return '#ED8936';
-      case 'note': return '#718096';
-      default: return '#667eea';
+      case 'doctor':
+        return { icon: 'medical' as const, color: colors.activity.health };
+      case 'vaccine':
+        return { icon: 'fitness' as const, color: colors.primary[500] };
+      case 'checkup':
+        return { icon: 'analytics' as const, color: colors.secondary[500] };
+      default:
+        return { icon: 'calendar' as const, color: colors.neutral[500] };
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.monthNavigation}>
-          <TouchableOpacity onPress={() => navigateMonth('prev')}>
-            <Ionicons name="chevron-back" size={24} color="white" />
-          </TouchableOpacity>
-          
-          <Text style={styles.monthYear}>
-            {monthNames[selectedDate.getMonth()]} {selectedDate.getFullYear()}
-          </Text>
-          
-          <TouchableOpacity onPress={() => navigateMonth('next')}>
-            <Ionicons name="chevron-forward" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.viewModeSelector}>
-          {(['month', 'week', 'day'] as const).map((mode) => (
-            <TouchableOpacity
-              key={mode}
-              style={[
-                styles.viewModeButton,
-                viewMode === mode && styles.activeViewMode,
-              ]}
-              onPress={() => setViewMode(mode)}
-            >
-              <Text
-                style={[
-                  styles.viewModeText,
-                  viewMode === mode && styles.activeViewModeText,
-                ]}
-              >
-                {mode === 'month' ? 'Ay' : mode === 'week' ? 'Hafta' : 'Gün'}
-              </Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Calendar Header */}
+        <LinearGradient
+          colors={colors.gradients.blue}
+          style={[styles.headerCard, { borderRadius: borderRadius.xl }, shadows.medium]}
+        >
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={goToPreviousMonth} style={styles.headerButton}>
+              <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
-          ))}
-        </View>
-      </View>
 
-      {/* Calendar Grid */}
-      <View style={styles.calendarContainer}>
-        {/* Week days header */}
-        <View style={styles.weekDays}>
-          {weekDays.map((day) => (
-            <View key={day} style={styles.weekDay}>
-              <Text style={styles.weekDayText}>{day}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Calendar days */}
-        <View style={styles.calendarGrid}>
-          {calendarDays.map((day, index) => {
-            if (day === null) {
-              return <View key={`empty-${index}`} style={styles.emptyDay} />;
-            }
-
-            const dayActivities = getActivitiesForDate(day);
-            const hasActivities = dayActivities.length > 0;
-
-            return (
-              <TouchableOpacity
-                key={day}
-                style={[
-                  styles.dayCell,
-                  isToday(day) && styles.todayCell,
-                  hasActivities && styles.hasActivitiesCell,
-                ]}
-                onPress={() => {
-                  // TODO: Show day details
-                  console.log('Day pressed:', day);
-                }}
-              >
-                <Text style={[
-                  styles.dayText,
-                  isToday(day) && styles.todayText,
-                ]}>
-                  {day}
-                </Text>
-                
-                {hasActivities && (
-                  <View style={styles.activityIndicators}>
-                    {dayActivities.slice(0, 3).map((activity, idx) => (
-                      <View
-                        key={idx}
-                        style={[
-                          styles.activityDot,
-                          { backgroundColor: getActivityColor(activity.type) }
-                        ]}
-                      />
-                    ))}
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Today's Activities */}
-      <View style={styles.todaySection}>
-        <Text style={styles.sectionTitle}>Bugünün Aktiviteleri</Text>
-        
-        {todayActivities.length > 0 ? (
-          todayActivities.map((activity) => (
-            <View key={activity.id} style={styles.activityItem}>
-              <View style={[styles.activityIcon, { backgroundColor: getActivityColor(activity.type) }]}>
-                <Ionicons name={getActivityIcon(activity.type) as any} size={16} color="white" />
-              </View>
-              
-              <View style={styles.activityContent}>
-                <Text style={styles.activityType}>
-                  {activity.type === 'feeding' ? 'Beslenme' :
-                   activity.type === 'sleep' ? 'Uyku' :
-                   activity.type === 'diaper' ? 'Bez' :
-                   activity.type === 'medication' ? 'İlaç' : 'Not'}
-                </Text>
-                <Text style={styles.activityTime}>
-                  {new Date(activity.startTime).toLocaleTimeString('tr-TR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </View>
-              
-              <TouchableOpacity style={styles.moreButton}>
-                <Ionicons name="ellipsis-vertical" size={16} color="#718096" />
-              </TouchableOpacity>
-            </View>
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={48} color="#CBD5E0" />
-            <Text style={styles.emptyStateText}>Bugün için aktivite yok</Text>
-            <Text style={styles.emptyStateSubtext}>
-              İlk aktiviteyi eklemek için Ana Sayfa'yı kullanın
+            <Text style={[styles.headerTitle, typography.h2, { color: 'white' }]}>
+              {calendarData.monthName}
             </Text>
+
+            <TouchableOpacity onPress={goToNextMonth} style={styles.headerButton}>
+              <Ionicons name="chevron-forward" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.todayButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+            onPress={goToToday}
+          >
+            <Text style={[styles.todayButtonText, { color: 'white' }]}>Bugüne Dön</Text>
+          </TouchableOpacity>
+        </LinearGradient>
+
+        {/* Calendar Grid */}
+        <View style={[styles.calendarCard, { backgroundColor: 'white' }, shadows.small]}>
+          {/* Weekday Headers */}
+          <View style={styles.weekdayRow}>
+            {['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'].map((day) => (
+              <Text
+                key={day}
+                style={[styles.weekdayText, typography.caption, { color: colors.textSecondary }]}
+              >
+                {day}
+              </Text>
+            ))}
+          </View>
+
+          {/* Calendar Days */}
+          <View style={styles.daysGrid}>
+            {calendarData.days.map((day, index) => {
+              if (day === null) {
+                return <View key={`empty-${index}`} style={styles.dayCell} />;
+              }
+
+              const date = new Date(calendarData.year, calendarData.month, day);
+              const isToday = date.toDateString() === new Date().toDateString();
+              const isSelected = date.toDateString() === selectedDate.toDateString();
+              const hasApt = hasAppointments(day);
+              const hasAct = hasActivities(day);
+
+              return (
+                <TouchableOpacity
+                  key={day}
+                  style={[
+                    styles.dayCell,
+                    isSelected && styles.dayCellSelected,
+                    isToday && !isSelected && styles.dayCellToday,
+                  ]}
+                  onPress={() => handleDayPress(day)}
+                >
+                  <Text
+                    style={[
+                      styles.dayText,
+                      typography.body,
+                      { color: isSelected ? 'white' : colors.text },
+                      isToday && !isSelected && { color: colors.primary[500], fontWeight: '700' },
+                    ]}
+                  >
+                    {day}
+                  </Text>
+                  <View style={styles.dayDots}>
+                    {hasApt && (
+                      <View style={[styles.dot, { backgroundColor: isSelected ? 'white' : colors.error[500] }]} />
+                    )}
+                    {hasAct && (
+                      <View style={[styles.dot, { backgroundColor: isSelected ? 'white' : colors.primary[500] }]} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Selected Date Info */}
+        <View style={[styles.selectedDateCard, { backgroundColor: colors.primary[50] }]}>
+          <Text style={[styles.selectedDateText, typography.h3, { color: colors.primary[700] }]}>
+            {selectedDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </Text>
+          <View style={styles.selectedDateStats}>
+            <View style={styles.selectedDateStat}>
+              <Ionicons name="calendar" size={20} color={colors.primary[500]} />
+              <Text style={[styles.selectedDateStatText, { color: colors.primary[600] }]}>
+                {selectedDateAppointments.length} Randevu
+              </Text>
+            </View>
+            <View style={styles.selectedDateStat}>
+              <Ionicons name="list" size={20} color={colors.primary[500]} />
+              <Text style={[styles.selectedDateStatText, { color: colors.primary[600] }]}>
+                {selectedDateActivities.length} Aktivite
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Appointments List */}
+        <View style={[styles.appointmentsCard, { backgroundColor: 'white' }, shadows.small]}>
+          <View style={styles.appointmentsHeader}>
+            <Text style={[styles.appointmentsTitle, typography.h3, { color: colors.text }]}>
+              Randevular
+            </Text>
+            <TouchableOpacity onPress={() => setShowAddModal(true)}>
+              <LinearGradient colors={colors.gradients.primary} style={styles.addButton}>
+                <Ionicons name="add" size={20} color="white" />
+                <Text style={[styles.addButtonText, { color: 'white' }]}>Ekle</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {selectedDateAppointments.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={48} color={colors.neutral[300]} />
+              <Text style={[styles.emptyText, typography.body, { color: colors.textSecondary }]}>
+                Bu tarih için randevu yok
+              </Text>
+            </View>
+          ) : (
+            selectedDateAppointments.map((apt) => {
+              const style = getAppointmentStyle(apt.type);
+              return (
+                <TouchableOpacity
+                  key={apt.id}
+                  style={[
+                    styles.appointmentItem,
+                    { borderLeftColor: style.color },
+                    apt.completed && styles.appointmentCompleted,
+                  ]}
+                  onPress={() => toggleAppointmentComplete(apt.id)}
+                >
+                  <View style={[styles.appointmentIcon, { backgroundColor: style.color + '20' }]}>
+                    <Ionicons name={style.icon} size={24} color={style.color} />
+                  </View>
+                  <View style={styles.appointmentInfo}>
+                    <Text
+                      style={[
+                        styles.appointmentTitle,
+                        typography.bodyBold,
+                        { color: colors.text },
+                        apt.completed && styles.appointmentTitleCompleted,
+                      ]}
+                    >
+                      {apt.title}
+                    </Text>
+                    <Text style={[styles.appointmentTime, typography.caption, { color: colors.textSecondary }]}>
+                      {apt.time}
+                    </Text>
+                    {apt.notes && (
+                      <Text style={[styles.appointmentNotes, typography.caption, { color: colors.textSecondary }]}>
+                        {apt.notes}
+                      </Text>
+                    )}
+                  </View>
+                  <Ionicons
+                    name={apt.completed ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                    size={28}
+                    color={apt.completed ? colors.success[500] : colors.neutral[300]}
+                  />
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
+
+        {/* Activities for Selected Date */}
+        {selectedDateActivities.length > 0 && (
+          <View style={[styles.activitiesCard, { backgroundColor: 'white' }, shadows.small]}>
+            <Text style={[styles.activitiesTitle, typography.h3, { color: colors.text }]}>
+              Bu Günün Aktiviteleri
+            </Text>
+            {selectedDateActivities.slice(0, 5).map((activity) => (
+              <View
+                key={activity.id}
+                style={[styles.activityItem, { borderBottomColor: colors.neutral[200] }]}
+              >
+                <Ionicons
+                  name={
+                    activity.type === 'feeding'
+                      ? 'restaurant'
+                      : activity.type === 'sleep'
+                      ? 'moon'
+                      : activity.type === 'diaper'
+                      ? 'water'
+                      : 'heart'
+                  }
+                  size={24}
+                  color={
+                    activity.type === 'feeding'
+                      ? colors.activity.feeding
+                      : activity.type === 'sleep'
+                      ? colors.activity.sleep
+                      : activity.type === 'diaper'
+                      ? colors.activity.diaper
+                      : colors.activity.health
+                  }
+                />
+                <Text style={[styles.activityText, typography.body, { color: colors.text }]}>
+                  {activity.type === 'feeding'
+                    ? 'Emzirme'
+                    : activity.type === 'sleep'
+                    ? 'Uyku'
+                    : activity.type === 'diaper'
+                    ? 'Bez Değişimi'
+                    : 'Sağlık'}
+                </Text>
+                <Text style={[styles.activityTime, typography.caption, { color: colors.textSecondary }]}>
+                  {new Date(activity.startTime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+            ))}
           </View>
         )}
-      </View>
+      </ScrollView>
 
-      {/* Quick Add Button */}
-      <TouchableOpacity style={styles.quickAddButton}>
-        <Ionicons name="add" size={24} color="white" />
-      </TouchableOpacity>
-    </ScrollView>
+      {/* Add Appointment Modal */}
+      <Modal
+        visible={showAddModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: 'white' }, shadows.large]}>
+            <Text style={[styles.modalTitle, typography.h2, { color: colors.text }]}>
+              Yeni Randevu Ekle
+            </Text>
+
+            <View style={styles.form}>
+              <TextInput
+                style={[styles.input, { borderColor: colors.neutral[300], color: colors.text }]}
+                placeholder="Randevu Başlığı"
+                placeholderTextColor={colors.textSecondary}
+                value={newAppointment.title}
+                onChangeText={(text) => setNewAppointment({ ...newAppointment, title: text })}
+              />
+
+              <View style={styles.typeButtons}>
+                {[
+                  { type: 'doctor', icon: 'medical', label: 'Doktor' },
+                  { type: 'vaccine', icon: 'fitness', label: 'Aşı' },
+                  { type: 'checkup', icon: 'analytics', label: 'Kontrol' },
+                  { type: 'other', icon: 'calendar', label: 'Diğer' },
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.type}
+                    style={[
+                      styles.typeButton,
+                      { borderColor: colors.neutral[300] },
+                      newAppointment.type === item.type && { backgroundColor: colors.primary[100], borderColor: colors.primary[500] },
+                    ]}
+                    onPress={() => setNewAppointment({ ...newAppointment, type: item.type as Appointment['type'] })}
+                  >
+                    <Ionicons
+                      name={item.icon as any}
+                      size={20}
+                      color={newAppointment.type === item.type ? colors.primary[500] : colors.neutral[500]}
+                    />
+                    <Text
+                      style={[
+                        styles.typeButtonLabel,
+                        { color: newAppointment.type === item.type ? colors.primary[700] : colors.neutral[600] },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TextInput
+                style={[styles.input, { borderColor: colors.neutral[300], color: colors.text }]}
+                placeholder="Tarih (YYYY-MM-DD)"
+                placeholderTextColor={colors.textSecondary}
+                value={newAppointment.date}
+                onChangeText={(text) => setNewAppointment({ ...newAppointment, date: text })}
+              />
+
+              <TextInput
+                style={[styles.input, { borderColor: colors.neutral[300], color: colors.text }]}
+                placeholder="Saat (HH:MM)"
+                placeholderTextColor={colors.textSecondary}
+                value={newAppointment.time}
+                onChangeText={(text) => setNewAppointment({ ...newAppointment, time: text })}
+              />
+
+              <TextInput
+                style={[styles.input, styles.textArea, { borderColor: colors.neutral[300], color: colors.text }]}
+                placeholder="Notlar (opsiyonel)"
+                placeholderTextColor={colors.textSecondary}
+                value={newAppointment.notes}
+                onChangeText={(text) => setNewAppointment({ ...newAppointment, notes: text })}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: colors.neutral[200] }]}
+                onPress={() => setShowAddModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>İptal</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleAddAppointment}>
+                <LinearGradient colors={colors.gradients.primary} style={styles.modalButton}>
+                  <Text style={[styles.modalButtonText, { color: 'white' }]}>Kaydet</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7FAFC',
   },
-  header: {
-    backgroundColor: '#FF6B9D',
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  headerCard: {
+    marginTop: 16,
     padding: 20,
-    paddingTop: 40,
   },
-  monthNavigation: {
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
   },
-  monthYear: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
+  headerButton: {
+    padding: 8,
   },
-  viewModeSelector: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-    padding: 4,
+  headerTitle: {
+    textAlign: 'center',
   },
-  viewModeButton: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
+  todayButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignSelf: 'center',
+  },
+  todayButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  calendarCard: {
+    marginTop: 16,
+    padding: 16,
     borderRadius: 16,
   },
-  activeViewMode: {
-    backgroundColor: 'white',
-  },
-  viewModeText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  activeViewModeText: {
-    color: '#FF6B9D',
-    fontWeight: 'bold',
-  },
-  calendarContainer: {
-    backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 15,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  weekDays: {
+  weekdayRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  weekDay: {
+  weekdayText: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: 5,
+    textAlign: 'center',
+    fontWeight: '600',
   },
-  weekDayText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#718096',
-  },
-  calendarGrid: {
+  daysGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   dayCell: {
-    width: (width - 70) / 7,
-    height: 60,
-    justifyContent: 'center',
+    width: '14.28%',
+    aspectRatio: 1,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    margin: 2,
+    justifyContent: 'center',
+    padding: 4,
   },
-  todayCell: {
-    backgroundColor: '#FFF5F7',
+  dayCellSelected: {
+    backgroundColor: '#FF6B9D',
+    borderRadius: 12,
+  },
+  dayCellToday: {
+    borderWidth: 2,
     borderColor: '#FF6B9D',
-  },
-  hasActivitiesCell: {
-    backgroundColor: '#F0FFF4',
+    borderRadius: 12,
   },
   dayText: {
-    fontSize: 14,
-    color: '#2D3748',
+    textAlign: 'center',
   },
-  todayText: {
-    color: '#FF6B9D',
-    fontWeight: 'bold',
-  },
-  emptyDay: {
-    width: (width - 70) / 7,
-    height: 60,
-    margin: 2,
-  },
-  activityIndicators: {
+  dayDots: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 4,
     gap: 2,
+    marginTop: 2,
   },
-  activityDot: {
+  dot: {
     width: 4,
     height: 4,
     borderRadius: 2,
   },
-  todaySection: {
-    margin: 20,
-    marginTop: 0,
+  selectedDateCard: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 12,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2D3748',
-    marginBottom: 15,
+  selectedDateText: {
+    textAlign: 'center',
+    marginBottom: 12,
   },
-  activityItem: {
+  selectedDateStats: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  activityIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     justifyContent: 'center',
+    gap: 24,
+  },
+  selectedDateStat: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
+    gap: 8,
   },
-  activityContent: {
-    flex: 1,
-  },
-  activityType: {
+  selectedDateStatText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#2D3748',
+    fontWeight: '600',
   },
-  activityTime: {
-    fontSize: 12,
-    color: '#718096',
-    marginTop: 2,
+  appointmentsCard: {
+    marginTop: 16,
+    padding: 20,
+    borderRadius: 16,
   },
-  moreButton: {
-    padding: 4,
+  appointmentsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  appointmentsTitle: {},
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 32,
   },
-  emptyStateText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4A5568',
-    marginTop: 15,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: '#718096',
-    marginTop: 5,
+  emptyText: {
+    marginTop: 12,
     textAlign: 'center',
   },
-  quickAddButton: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF6B9D',
+  appointmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderLeftWidth: 4,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
+    marginBottom: 12,
+  },
+  appointmentCompleted: {
+    opacity: 0.6,
+  },
+  appointmentIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appointmentInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  appointmentTitle: {},
+  appointmentTitleCompleted: {
+    textDecorationLine: 'line-through',
+  },
+  appointmentTime: {},
+  appointmentNotes: {
+    fontStyle: 'italic',
+  },
+  activitiesCard: {
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+  },
+  activitiesTitle: {
+    marginBottom: 16,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  activityText: {
+    flex: 1,
+  },
+  activityTime: {},
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    padding: 24,
+    borderRadius: 24,
+    maxHeight: '90%',
+  },
+  modalTitle: {
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  form: {
+    gap: 16,
+    marginBottom: 24,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  typeButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  typeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  typeButtonLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
-
-export default CalendarScreen;

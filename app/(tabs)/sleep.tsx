@@ -1,6 +1,6 @@
 import React from 'react';
-import SleepScreenNew from '../../src/screens/SleepScreenNew';
+import SleepScreen from '../../src/screens/SleepScreen';
 
 export default function SleepTab() {
-  return <SleepScreenNew />;
+  return <SleepScreen />;
 }

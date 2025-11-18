@@ -1,6 +1,6 @@
 import React from 'react';
-import DevelopmentScreenNew from '../../src/screens/DevelopmentScreenNew';
+import DevelopmentScreen from '../../src/screens/DevelopmentScreen';
 
 export default function DevelopmentTab() {
-  return <DevelopmentScreenNew />;
+  return <DevelopmentScreen />;
 }

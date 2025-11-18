@@ -1,5 +1,5 @@
-import HomeScreenNew from '../../src/screens/HomeScreenNew';
+import HomeScreen from '../../src/screens/HomeScreen';
 
 export default function TabIndexScreen() {
-  return <HomeScreenNew />;
+  return <HomeScreen />;
 }

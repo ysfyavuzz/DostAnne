@@ -1,6 +1,6 @@
 import React from 'react';
-import MotherWorldScreenNew from '../../src/screens/MotherWorldScreenNew';
+import MotherWorldScreen from '../../src/screens/MotherWorldScreen';
 
 export default function MotherWorldTab() {
-  return <MotherWorldScreenNew />;
+  return <MotherWorldScreen />;
 }

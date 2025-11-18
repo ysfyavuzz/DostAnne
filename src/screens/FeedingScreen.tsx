@@ -1,577 +1,1213 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
+  Alert,
+  Modal,
   Animated,
   Dimensions,
-  ImageBackground,
-  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '../store/store';
-import { addActivity } from '../store/store';
+import * as Haptics from 'expo-haptics';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useDatabase } from '../hooks/useDatabase';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
+import OneHandedMode from '../components/OneHandedMode';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-const FeedingScreen = () => {
-  const { baby } = useSelector((state: RootState) => state.activities);
-  const dispatch = useDispatch<AppDispatch>();
-  
-  const [isFeeding, setIsFeeding] = useState(false);
-  const [activeSide, setActiveSide] = useState<'left' | 'right' | null>(null);
-  const [leftDuration, setLeftDuration] = useState(0);
-  const [rightDuration, setRightDuration] = useState(0);
-  const [leftAmount, setLeftAmount] = useState(0);
-  const [rightAmount, setRightAmount] = useState(0);
-  const [totalDuration, setTotalDuration] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(0);
-  
-  const leftBreastAnim = useRef(new Animated.Value(1)).current;
-  const rightBreastAnim = useRef(new Animated.Value(1)).current;
-  const milkFlowAnim = useRef(new Animated.Value(0)).current;
-  const stomachFillAnim = useRef(new Animated.Value(0)).current;
-  
-  const startTimeRef = useRef<number | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+type FeedingType = 'breast' | 'bottle' | 'solid';
+type BreastSide = 'left' | 'right' | null;
+
+interface FeedingSession {
+  id: string;
+  type: FeedingType;
+  side?: BreastSide;
+  startTime: string;
+  endTime?: string;
+  duration: number;
+  amount?: number;
+  notes?: string;
+}
+
+interface SideStats {
+  duration: number;
+  amount: number;
+  count: number;
+}
+
+// Animated Bottle Component
+const AnimatedBottle = ({ 
+  side, 
+  isActive, 
+  duration, 
+  amount 
+}: { 
+  side: 'left' | 'right'; 
+  isActive: boolean; 
+  duration: number; 
+  amount: number;
+}) => {
+  const flowAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const liquidAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (isFeeding && activeSide) {
-      startTimeRef.current = Date.now();
-      intervalRef.current = setInterval(() => {
-        updateFeedingData();
-      }, 100);
+    if (isActive) {
+      // Flow animation (liquid flowing)
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(flowAnim, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(flowAnim, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Liquid fill animation
+      Animated.timing(liquidAnim, {
+        toValue: Math.min(amount / 200, 1), // Max 200ml for visual
+        duration: 500,
+        useNativeDriver: false,
+      }).start();
     } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      flowAnim.setValue(0);
+      pulseAnim.setValue(1);
     }
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isFeeding, activeSide]);
+  }, [isActive, amount]);
 
-  const updateFeedingData = () => {
-    if (!activeSide) return;
-    
-    const elapsed = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
-    const mlPerSecond = 0.5; // Ortalama 0.5 ml/saniye
-    const currentAmount = Math.floor(elapsed * mlPerSecond);
-    
-    if (activeSide === 'left') {
-      setLeftDuration(elapsed);
-      setLeftAmount(currentAmount);
-    } else {
-      setRightDuration(elapsed);
-      setRightAmount(currentAmount);
-    }
-    
-    setTotalDuration(leftDuration + rightDuration + (activeSide === 'left' ? elapsed : 0) + (activeSide === 'right' ? elapsed : 0));
-    setTotalAmount(leftAmount + rightAmount + (activeSide === 'left' ? currentAmount : 0) + (activeSide === 'right' ? currentAmount : 0));
-    
-    // Animasyonları güncelle
-    updateAnimations();
-  };
+  const flowTranslateY = flowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 120],
+  });
 
-  const updateAnimations = () => {
-    if (activeSide === 'left') {
-      Animated.sequence([
-        Animated.timing(leftBreastAnim, { toValue: 0.8, duration: 500, useNativeDriver: true }),
-        Animated.timing(leftBreastAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      ]).start();
-      
-      Animated.timing(milkFlowAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-    } else if (activeSide === 'right') {
-      Animated.sequence([
-        Animated.timing(rightBreastAnim, { toValue: 0.8, duration: 500, useNativeDriver: true }),
-        Animated.timing(rightBreastAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      ]).start();
-      
-      Animated.timing(milkFlowAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-    }
-    
-    // Mide dolum animasyonu
-    const fillPercentage = Math.min(totalAmount / 500, 1); // Max 500ml
-    Animated.timing(stomachFillAnim, { toValue: fillPercentage, duration: 1000, useNativeDriver: false }).start();
-  };
+  const flowOpacity = flowAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0.5, 0],
+  });
 
-  const startFeeding = (side: 'left' | 'right') => {
-    if (!baby) {
-      Alert.alert('Bilgi', 'Lütfen önce bebek bilgilerini girin.');
-      return;
-    }
-    
-    if (isFeeding && activeSide !== side) {
-      Alert.alert('Bilgi', 'Lütfen önce mevcut beslemeyi bitirin.');
-      return;
-    }
-    
-    setActiveSide(side);
-    setIsFeeding(true);
-    
-    // Başlangıç animasyonu
-    Animated.timing(side === 'left' ? leftBreastAnim : rightBreastAnim, {
-      toValue: 0.9,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
+  const liquidHeight = liquidAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '80%'],
+  });
 
-  const stopFeeding = () => {
-    if (!isFeeding || !activeSide) return;
-    
-    setIsFeeding(false);
-    
-    // Aktiviteyi kaydet
-    const activity = {
-      id: Date.now().toString(),
-      type: 'feeding' as const,
-      actor: 'baby' as const,
-      startTime: new Date(Date.now() - (activeSide === 'left' ? leftDuration : rightDuration) * 1000).toISOString(),
-      endTime: new Date().toISOString(),
-      quantity: activeSide === 'left' ? leftAmount : rightAmount,
-      unit: 'ml',
-      notes: `${activeSide === 'left' ? 'Sol' : 'Sağ'} göğüs - ${activeSide === 'left' ? leftDuration : rightDuration} saniye`,
-    };
-    
-    dispatch(addActivity(activity));
-    
-    // Animasyonları sıfırla
-    Animated.timing(activeSide === 'left' ? leftBreastAnim : rightBreastAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-    
-    Animated.timing(milkFlowAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start();
-    
-    setActiveSide(null);
-  };
-
-  const resetSession = () => {
-    setIsFeeding(false);
-    setActiveSide(null);
-    setLeftDuration(0);
-    setRightDuration(0);
-    setLeftAmount(0);
-    setRightAmount(0);
-    setTotalDuration(0);
-    setTotalAmount(0);
-    startTimeRef.current = null;
-    
-    // Tüm animasyonları sıfırla
-    Animated.parallel([
-      Animated.timing(leftBreastAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-      Animated.timing(rightBreastAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-      Animated.timing(milkFlowAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
-      Animated.timing(stomachFillAnim, { toValue: 0, duration: 300, useNativeDriver: false }),
-    ]).start();
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (hours > 0) {
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
-
-  const MilkDrop = ({ side }: { side: 'left' | 'right' }) => (
-    <Animated.View
-      style={[
-        styles.milkDrop,
-        {
-          opacity: milkFlowAnim,
-          transform: [
-            {
-              translateY: milkFlowAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [-50, 150],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
-      <View style={styles.milkDropInner} />
-    </Animated.View>
-  );
-
-  const MilkFlow = ({ side }: { side: 'left' | 'right' }) => (
-    <View style={[styles.milkFlowContainer, side === 'left' ? styles.leftFlow : styles.rightFlow]}>
-      <MilkDrop side={side} />
-      {activeSide === side && (
-        <Animated.View style={[styles.milkStream, { opacity: milkFlowAnim }]} />
-      )}
-    </View>
-  );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Emzirme</Text>
-        <TouchableOpacity onPress={resetSession} style={styles.resetButton}>
-          <Ionicons name="refresh" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Baby Info */}
-      <View style={styles.babyInfo}>
-        <Text style={styles.babyName}>{baby?.name || 'Bebek Adı'}</Text>
-        <Text style={styles.sessionInfo}>
-          {isFeeding ? 'Besleme Aktif' : 'Yeni Besleme'}
-        </Text>
-      </View>
-
-      {/* Main Feeding Area */}
-      <View style={styles.feedingArea}>
-        {/* Sol Göğüs */}
-        <View style={styles.breastContainer}>
-          <TouchableOpacity
-            style={[
-              styles.breast,
-              styles.leftBreast,
-              activeSide === 'left' && styles.activeBreast,
-              activeSide === 'right' && styles.inactiveBreast,
-            ]}
-            onPress={() => activeSide === 'left' ? stopFeeding() : startFeeding('left')}
-            disabled={activeSide === 'right'}
-          >
-            <Animated.View style={[styles.breastInner, { transform: [{ scale: leftBreastAnim }] }]}>
-              <View style={styles.breastContent}>
-                <Ionicons name="water" size={40} color="#4299E1" />
-                <Text style={styles.breastLabel}>Sol</Text>
-                <Text style={styles.breastSublabel}>Mavi Kapak</Text>
-              </View>
-            </Animated.View>
-          </TouchableOpacity>
-          
-          <MilkFlow side="left" />
-          
-          <View style={styles.breastStats}>
-            <Text style={styles.statLabel}>Süre</Text>
-            <Text style={styles.statValue}>{formatTime(leftDuration)}</Text>
-            <Text style={styles.statLabel}>Miktar</Text>
-            <Text style={styles.statValue}>{leftAmount} ml</Text>
-          </View>
+    <View style={[styles.bottleContainer, side === 'right' && styles.bottleContainerRight]}>
+      {/* Timer above bottle */}
+      {duration > 0 && (
+        <View style={[styles.timerBadge, isActive && styles.timerBadgeActive]}>
+          <Text style={[styles.timerBadgeText, isActive && styles.timerBadgeTextActive]}>
+            {formatTime(duration)}
+          </Text>
         </View>
+      )}
 
-        {/* Sağ Göğüs */}
-        <View style={styles.breastContainer}>
-          <TouchableOpacity
-            style={[
-              styles.breast,
-              styles.rightBreast,
-              activeSide === 'right' && styles.activeBreast,
-              activeSide === 'left' && styles.inactiveBreast,
-            ]}
-            onPress={() => activeSide === 'right' ? stopFeeding() : startFeeding('right')}
-            disabled={activeSide === 'left'}
-          >
-            <Animated.View style={[styles.breastInner, { transform: [{ scale: rightBreastAnim }] }]}>
-              <View style={styles.breastContent}>
-                <Ionicons name="water" size={40} color="#FF6B9D" />
-                <Text style={styles.breastLabel}>Sağ</Text>
-                <Text style={styles.breastSublabel}>Kırmızı Kapak</Text>
-              </View>
-            </Animated.View>
-          </TouchableOpacity>
-          
-          <MilkFlow side="right" />
-          
-          <View style={styles.breastStats}>
-            <Text style={styles.statLabel}>Süre</Text>
-            <Text style={styles.statValue}>{formatTime(rightDuration)}</Text>
-            <Text style={styles.statLabel}>Miktar</Text>
-            <Text style={styles.statValue}>{rightAmount} ml</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Mide Animasyonu */}
-      <View style={styles.stomachContainer}>
-        <View style={styles.stomachOutline}>
-          <Text style={styles.stomachLabel}>Mide</Text>
-          <Animated.View
-            style={[
-              styles.stomachFill,
-              {
-                height: stomachFillAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 120],
-                }),
-              },
-            ]}
-          />
-          <View style={styles.stomachStats}>
-            <Text style={styles.totalStat}>Toplam: {totalAmount} ml</Text>
-            <Text style={styles.totalStat}>Süre: {formatTime(totalDuration)}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Control Buttons */}
-      <View style={styles.controlArea}>
-        <TouchableOpacity
-          style={[styles.controlButton, styles.bottleButton]}
-          onPress={() => {
-            // TODO: Bottle feeding modal
-            Alert.alert('Bilgi', 'Biberon besleme özelliği yakında eklenecek.');
-          }}
-        >
-          <Ionicons name="restaurant" size={24} color="white" />
-          <Text style={styles.controlButtonText}>Biberon</Text>
-        </TouchableOpacity>
+      {/* Bottle */}
+      <Animated.View 
+        style={[
+          styles.bottle, 
+          { transform: [{ scale: pulseAnim }] },
+          isActive && styles.bottleActive
+        ]}
+      >
+        {/* Liquid inside bottle */}
+        <Animated.View 
+          style={[
+            styles.liquidFill, 
+            { 
+              height: liquidHeight,
+              backgroundColor: isActive ? '#FFE5F0' : '#F0F0F0'
+            }
+          ]} 
+        />
         
-        {isFeeding && (
-          <TouchableOpacity
-            style={[styles.controlButton, styles.stopButton]}
-            onPress={stopFeeding}
-          >
-            <Ionicons name="stop" size={24} color="white" />
-            <Text style={styles.controlButtonText}>Bitir</Text>
-          </TouchableOpacity>
+        {/* Bottle icon overlay */}
+        <View style={styles.bottleIconContainer}>
+          <Ionicons 
+            name="water" 
+            size={60} 
+            color={isActive ? '#FF69B4' : '#CCCCCC'} 
+          />
+        </View>
+      </Animated.View>
+
+      {/* Tube/Pipe */}
+      <View style={styles.tube}>
+        {/* Animated milk drops flowing */}
+        {isActive && (
+          <>
+            <Animated.View
+              style={[
+                styles.milkDrop,
+                {
+                  transform: [{ translateY: flowTranslateY }],
+                  opacity: flowOpacity,
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.milkDrop,
+                {
+                  transform: [{ translateY: flowTranslateY }],
+                  opacity: flowOpacity,
+                  top: 20,
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.milkDrop,
+                {
+                  transform: [{ translateY: flowTranslateY }],
+                  opacity: flowOpacity,
+                  top: 40,
+                },
+              ]}
+            />
+          </>
         )}
+      </View>
+
+      {/* Stats below bottle */}
+      <View style={styles.bottleStats}>
+        <Text style={[styles.bottleStatText, isActive && styles.bottleStatTextActive]}>
+          {amount}ml
+        </Text>
       </View>
     </View>
   );
 };
 
+export default function FeedingScreenNew() {
+  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { startFeedingSession, endFeedingSession } = useDatabase();
+  const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
+  const activities = useSelector((state: RootState) => state.database.activities);
+
+  // Timer state
+  const [isActive, setIsActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // One-handed mode state
+  const [oneHandedMode, setOneHandedMode] = useState(false);
+
+  // Feeding type state
+  const [feedingType, setFeedingType] = useState<FeedingType>('breast');
+  const [breastSide, setBreastSide] = useState<BreastSide>('left');
+
+  // Separate stats for each side
+  const [leftStats, setLeftStats] = useState<SideStats>({ duration: 0, amount: 0, count: 0 });
+  const [rightStats, setRightStats] = useState<SideStats>({ duration: 0, amount: 0, count: 0 });
+
+  // Modal state
+  const [showEndModal, setShowEndModal] = useState(false);
+  const [notes, setNotes] = useState('');
+
+  // Scale animation for baby
+  const babyScale = useRef(new Animated.Value(1)).current;
+
+  // Update stats based on active side
+  useEffect(() => {
+    if (isActive && !isPaused) {
+      intervalRef.current = setInterval(() => {
+        if (breastSide === 'left') {
+          setLeftStats(prev => ({ 
+            ...prev, 
+            duration: prev.duration + 1,
+            amount: prev.amount + 0.5 // Estimate 0.5ml per second
+          }));
+        } else if (breastSide === 'right') {
+          setRightStats(prev => ({ 
+            ...prev, 
+            duration: prev.duration + 1,
+            amount: prev.amount + 0.5
+          }));
+        }
+      }, 1000);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isActive, isPaused, breastSide]);
+
+  // Baby feeding animation
+  useEffect(() => {
+    if (isActive && !isPaused) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(babyScale, {
+            toValue: 1.05,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(babyScale, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      babyScale.setValue(1);
+    }
+  }, [isActive, isPaused]);
+
+  // Start feeding session
+  const handleStart = async (side?: 'left' | 'right') => {
+    if (!currentBaby?.id) {
+      Alert.alert('Hata', 'Lütfen önce bir bebek profili oluşturun');
+      return;
+    }
+
+    // If side is provided (from OneHandedMode), use it
+    const activeSide = side || breastSide;
+    if (side) {
+      setBreastSide(side);
+    }
+
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      const newSessionId = await startFeedingSession({
+        type: feedingType,
+        side: feedingType === 'breast' ? activeSide : undefined,
+        amount: 0,
+      });
+
+      setSessionId(newSessionId);
+      setIsActive(true);
+      setIsPaused(false);
+      
+      // Increment count for the active side
+      if (activeSide === 'left') {
+        setLeftStats(prev => ({ ...prev, count: prev.count + 1 }));
+      } else if (activeSide === 'right') {
+        setRightStats(prev => ({ ...prev, count: prev.count + 1 }));
+      }
+    } catch (error) {
+      console.error('Error starting feeding session:', error);
+      Alert.alert('Hata', 'Emzirme oturumu başlatılamadı');
+    }
+  };
+
+  // Pause/Resume
+  const handlePauseResume = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsPaused(!isPaused);
+  };
+
+  // Separate pause function for OneHandedMode
+  const handlePause = () => {
+    handlePauseResume();
+  };
+
+  // Stop and save
+  const handleStop = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setShowEndModal(true);
+  };
+
+  // Quick swap breast sides
+  const handleSwapSide = async () => {
+    if (feedingType === 'breast' && isActive) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      
+      // Pause current side
+      setIsPaused(true);
+      
+      // Switch side
+      const newSide = breastSide === 'left' ? 'right' : 'left';
+      setBreastSide(newSide);
+      
+      // Increment count for new side
+      if (newSide === 'left') {
+        setLeftStats(prev => ({ ...prev, count: prev.count + 1 }));
+      } else {
+        setRightStats(prev => ({ ...prev, count: prev.count + 1 }));
+      }
+      
+      // Resume after 1 second
+      setTimeout(() => {
+        setIsPaused(false);
+        Alert.alert('Taraf Değiştirildi', `${newSide === 'left' ? 'Sol' : 'Sağ'} tarafa geçildi`);
+      }, 1000);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!sessionId) return;
+
+    try {
+      const totalAmount = Math.round(leftStats.amount + rightStats.amount);
+      
+      await endFeedingSession(sessionId, {
+        amount: totalAmount,
+        notes: notes.trim() || undefined,
+      });
+
+      // Reset state
+      setIsActive(false);
+      setIsPaused(false);
+      setSessionId(null);
+      setNotes('');
+      setShowEndModal(false);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Başarılı', 'Emzirme oturumu kaydedildi');
+    } catch (error) {
+      console.error('Error ending feeding session:', error);
+      Alert.alert('Hata', 'Emzirme oturumu kaydedilemedi');
+    }
+  };
+
+  // Calculate today's total stats
+  const todayStats = useMemo(() => {
+    const today = new Date().toDateString();
+    const todayFeedings = activities.filter(
+      (a) => a.type === 'feeding' && new Date(a.startTime).toDateString() === today
+    );
+
+    const totalDuration = todayFeedings.reduce((sum, a) => {
+      const start = new Date(a.startTime);
+      const end = a.endTime ? new Date(a.endTime) : new Date();
+      return sum + Math.floor((end.getTime() - start.getTime()) / 1000);
+    }, 0);
+
+    const totalAmount = todayFeedings.reduce((sum, a) => {
+      return sum + (a.details?.amount || 0);
+    }, 0);
+
+    return {
+      count: todayFeedings.length,
+      duration: totalDuration,
+      amount: totalAmount,
+    };
+  }, [activities]);
+
+  const totalCurrentDuration = leftStats.duration + rightStats.duration;
+  const totalCurrentAmount = Math.round(leftStats.amount + rightStats.amount);
+  const totalCurrentCount = leftStats.count + rightStats.count;
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+      {/* One-Handed Mode Toggle - Top Right */}
+      <View style={styles.headerControls}>
+        <TouchableOpacity
+          style={[styles.oneHandedToggle, oneHandedMode && styles.oneHandedToggleActive]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setOneHandedMode(!oneHandedMode);
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="hand-left"
+            size={20}
+            color={oneHandedMode ? '#FFFFFF' : '#6B7280'}
+          />
+          <Text style={[styles.oneHandedToggleText, oneHandedMode && styles.oneHandedToggleTextActive]}>
+            Tek El
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Conditional Rendering: One-Handed Mode or Full UI */}
+      {oneHandedMode ? (
+        <OneHandedMode
+          onStartLeft={() => handleStart('left')}
+          onStartRight={() => handleStart('right')}
+          onStop={handleStop}
+          onPause={handlePause}
+          isActive={isActive}
+          isPaused={isPaused}
+          currentSide={breastSide}
+          duration={breastSide === 'left' ? leftStats.duration : rightStats.duration}
+        />
+      ) : (
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Main Visual Card */}
+        <LinearGradient
+          colors={isActive ? colors.gradients.pink : colors.gradients.blue}
+          style={[styles.visualCard, { borderRadius: borderRadius.xl }, shadows.medium]}
+        >
+          <Text style={[styles.mainTitle, typography.h2, { color: 'white' }]}>
+            {isActive ? 'Emzirme Devam Ediyor' : 'Emzirme Takibi'}
+          </Text>
+
+          {/* Feeding Type Selector (only when not active) */}
+          {!isActive && (
+            <View style={styles.typeSelector}>
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  feedingType === 'breast' && styles.typeButtonActive,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setFeedingType('breast');
+                }}
+              >
+                <Ionicons
+                  name="person"
+                  size={24}
+                  color={feedingType === 'breast' ? colors.primary[500] : 'white'}
+                />
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    { color: feedingType === 'breast' ? colors.primary[500] : 'white' },
+                  ]}
+                >
+                  Anne Sütü
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  feedingType === 'bottle' && styles.typeButtonActive,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setFeedingType('bottle');
+                }}
+              >
+                <Ionicons
+                  name="water-outline"
+                  size={24}
+                  color={feedingType === 'bottle' ? colors.primary[500] : 'white'}
+                />
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    { color: feedingType === 'bottle' ? colors.primary[500] : 'white' },
+                  ]}
+                >
+                  Biberon
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Dual Bottle Visualization */}
+          {feedingType === 'breast' && (
+            <View style={styles.visualContainer}>
+              {/* Left Bottle */}
+              <AnimatedBottle 
+                side="left" 
+                isActive={isActive && !isPaused && breastSide === 'left'}
+                duration={leftStats.duration}
+                amount={Math.round(leftStats.amount)}
+              />
+
+              {/* Baby in the middle */}
+              <View style={styles.babyContainer}>
+                <Animated.View style={{ transform: [{ scale: babyScale }] }}>
+                  <Ionicons 
+                    name="person" 
+                    size={80} 
+                    color={isActive ? '#FF69B4' : '#FFFFFF'} 
+                  />
+                </Animated.View>
+                <Text style={styles.babyLabel}>Bebek</Text>
+              </View>
+
+              {/* Right Bottle */}
+              <AnimatedBottle 
+                side="right" 
+                isActive={isActive && !isPaused && breastSide === 'right'}
+                duration={rightStats.duration}
+                amount={Math.round(rightStats.amount)}
+              />
+            </View>
+          )}
+
+          {/* Side selector when not active */}
+          {!isActive && feedingType === 'breast' && (
+            <View style={styles.sideSelector}>
+              <TouchableOpacity
+                style={[
+                  styles.sideButton,
+                  breastSide === 'left' && styles.sideButtonActive,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setBreastSide('left');
+                }}
+              >
+                <Text style={[styles.sideButtonText, breastSide === 'left' && styles.sideButtonTextActive]}>
+                  🍼 Sol Taraf
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.sideButton,
+                  breastSide === 'right' && styles.sideButtonActive,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setBreastSide('right');
+                }}
+              >
+                <Text style={[styles.sideButtonText, breastSide === 'right' && styles.sideButtonTextActive]}>
+                  Sağ Taraf 🍼
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Control Buttons */}
+          <View style={styles.controlButtons}>
+            {!isActive ? (
+              <TouchableOpacity
+                style={[styles.startButton, { backgroundColor: 'white' }]}
+                onPress={handleStart}
+              >
+                <Ionicons name="play" size={28} color={colors.primary[500]} />
+                <Text style={[styles.startButtonText, { color: colors.primary[500] }]}>
+                  Başlat
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={[styles.controlButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                  onPress={handlePauseResume}
+                >
+                  <Ionicons name={isPaused ? 'play' : 'pause'} size={24} color="white" />
+                  <Text style={[styles.controlButtonText, { color: 'white' }]}>
+                    {isPaused ? 'Devam' : 'Duraklat'}
+                  </Text>
+                </TouchableOpacity>
+
+                {feedingType === 'breast' && (
+                  <TouchableOpacity
+                    style={[styles.controlButton, { backgroundColor: 'rgba(255,255,255,0.3)' }]}
+                    onPress={handleSwapSide}
+                  >
+                    <Ionicons name="swap-horizontal" size={24} color="white" />
+                    <Text style={[styles.controlButtonText, { color: 'white' }]}>
+                      Değiştir
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={[styles.controlButton, { backgroundColor: 'white' }]}
+                  onPress={handleStop}
+                >
+                  <Ionicons name="stop" size={24} color={colors.primary[500]} />
+                  <Text style={[styles.controlButtonText, { color: colors.primary[500] }]}>
+                    Bitir
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </LinearGradient>
+
+        {/* Total Stats (Merge Point) */}
+        <View style={[styles.totalStatsCard, { backgroundColor: 'white' }, shadows.medium]}>
+          <View style={styles.totalStatsHeader}>
+            <Ionicons name="stats-chart" size={28} color={colors.primary[500]} />
+            <Text style={[styles.totalStatsTitle, typography.h3, { color: colors.text }]}>
+              Toplam İstatistikler
+            </Text>
+          </View>
+
+          <View style={styles.totalStatsGrid}>
+            <View style={styles.totalStatItem}>
+              <View style={[styles.totalStatIconContainer, { backgroundColor: colors.primary[100] }]}>
+                <Ionicons name="time" size={32} color={colors.primary[500]} />
+              </View>
+              <Text style={[styles.totalStatValue, typography.h2, { color: colors.text }]}>
+                {Math.floor(totalCurrentDuration / 60)}:{String(totalCurrentDuration % 60).padStart(2, '0')}
+              </Text>
+              <Text style={[styles.totalStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                Toplam Süre
+              </Text>
+            </View>
+
+            <View style={styles.totalStatItem}>
+              <View style={[styles.totalStatIconContainer, { backgroundColor: colors.secondary[100] }]}>
+                <Ionicons name="water" size={32} color={colors.secondary[500]} />
+              </View>
+              <Text style={[styles.totalStatValue, typography.h2, { color: colors.text }]}>
+                {totalCurrentAmount}
+              </Text>
+              <Text style={[styles.totalStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                Mililitre (ml)
+              </Text>
+            </View>
+
+            <View style={styles.totalStatItem}>
+              <View style={[styles.totalStatIconContainer, { backgroundColor: colors.success[100] }]}>
+                <Ionicons name="restaurant" size={32} color={colors.success[500]} />
+              </View>
+              <Text style={[styles.totalStatValue, typography.h2, { color: colors.text }]}>
+                {totalCurrentCount}
+              </Text>
+              <Text style={[styles.totalStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                Ziyade Sayısı
+              </Text>
+            </View>
+          </View>
+
+          {/* Individual Side Stats */}
+          <View style={styles.sideStatsContainer}>
+            <View style={styles.sideStatCard}>
+              <Text style={[styles.sideStatTitle, { color: colors.primary[500] }]}>🍼 Sol Taraf</Text>
+              <Text style={[styles.sideStatValue, { color: colors.text }]}>
+                {Math.floor(leftStats.duration / 60)}:{String(leftStats.duration % 60).padStart(2, '0')}
+              </Text>
+              <Text style={[styles.sideStatDetail, { color: colors.textSecondary }]}>
+                {Math.round(leftStats.amount)}ml • {leftStats.count} ziyade
+              </Text>
+            </View>
+
+            <View style={styles.sideStatCard}>
+              <Text style={[styles.sideStatTitle, { color: colors.secondary[500] }]}>Sağ Taraf 🍼</Text>
+              <Text style={[styles.sideStatValue, { color: colors.text }]}>
+                {Math.floor(rightStats.duration / 60)}:{String(rightStats.duration % 60).padStart(2, '0')}
+              </Text>
+              <Text style={[styles.sideStatDetail, { color: colors.textSecondary }]}>
+                {Math.round(rightStats.amount)}ml • {rightStats.count} ziyade
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Today's History Stats */}
+        <View style={[styles.historyCard, { backgroundColor: 'white' }, shadows.small]}>
+          <Text style={[styles.historyTitle, typography.h3, { color: colors.text }]}>
+            Bugünün Geçmişi
+          </Text>
+
+          <View style={styles.historyStatsGrid}>
+            <View style={styles.historyStatItem}>
+              <Ionicons name="restaurant" size={28} color={colors.activity.feeding} />
+              <Text style={[styles.historyStatValue, typography.h3, { color: colors.text }]}>
+                {todayStats.count}
+              </Text>
+              <Text style={[styles.historyStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                Toplam Oturum
+              </Text>
+            </View>
+
+            <View style={styles.historyStatItem}>
+              <Ionicons name="time-outline" size={28} color={colors.activity.sleep} />
+              <Text style={[styles.historyStatValue, typography.h3, { color: colors.text }]}>
+                {Math.floor(todayStats.duration / 60)}dk
+              </Text>
+              <Text style={[styles.historyStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                Bugünkü Süre
+              </Text>
+            </View>
+
+            <View style={styles.historyStatItem}>
+              <Ionicons name="water" size={28} color={colors.primary[500]} />
+              <Text style={[styles.historyStatValue, typography.h3, { color: colors.text }]}>
+                {todayStats.amount}ml
+              </Text>
+              <Text style={[styles.historyStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                Bugünkü Miktar
+              </Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+      )}
+      {/* End of conditional rendering */}
+
+      {/* End Session Modal */}
+      <Modal
+        visible={showEndModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowEndModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: 'white' }, shadows.large]}>
+            <Text style={[styles.modalTitle, typography.h2, { color: colors.text }]}>
+              Emzirme Tamamlandı! 🎉
+            </Text>
+
+            <View style={styles.modalStats}>
+              <View style={styles.modalStatItem}>
+                <Ionicons name="time" size={32} color={colors.primary[500]} />
+                <Text style={[styles.modalStatValue, typography.h3, { color: colors.text }]}>
+                  {Math.floor(totalCurrentDuration / 60)}:{String(totalCurrentDuration % 60).padStart(2, '0')}
+                </Text>
+                <Text style={[styles.modalStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                  Toplam Süre
+                </Text>
+              </View>
+
+              <View style={styles.modalStatItem}>
+                <Ionicons name="water" size={32} color={colors.secondary[500]} />
+                <Text style={[styles.modalStatValue, typography.h3, { color: colors.text }]}>
+                  {totalCurrentAmount}ml
+                </Text>
+                <Text style={[styles.modalStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                  Toplam Miktar
+                </Text>
+              </View>
+
+              <View style={styles.modalStatItem}>
+                <Ionicons name="restaurant" size={32} color={colors.success[500]} />
+                <Text style={[styles.modalStatValue, typography.h3, { color: colors.text }]}>
+                  {totalCurrentCount}
+                </Text>
+                <Text style={[styles.modalStatLabel, typography.caption, { color: colors.textSecondary }]}>
+                  Ziyade Sayısı
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: colors.neutral[200] }]}
+                onPress={() => setShowEndModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>İptal</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleSave}>
+                <LinearGradient
+                  colors={colors.gradients.pink}
+                  style={styles.modalButton}
+                >
+                  <Text style={[styles.modalButtonText, { color: 'white' }]}>Kaydet</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7FAFC',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  visualCard: {
+    marginTop: 16,
+    padding: 24,
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FF6B9D',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  mainTitle: {
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  typeSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+    width: '100%',
+  },
+  typeButton: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    gap: 8,
+  },
+  typeButtonActive: {
+    backgroundColor: 'white',
+  },
+  typeButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  visualContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginVertical: 24,
+    paddingHorizontal: 8,
+  },
+  bottleContainer: {
+    alignItems: 'center',
+    width: 80,
+  },
+  bottleContainerRight: {
+    alignItems: 'center',
+  },
+  timerBadge: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  timerBadgeActive: {
+    backgroundColor: 'white',
+  },
+  timerBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
     color: 'white',
   },
-  resetButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  timerBadgeTextActive: {
+    color: '#FF69B4',
   },
-  babyInfo: {
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: 'white',
-    marginHorizontal: 20,
-    marginTop: 20,
+  bottle: {
+    width: 70,
+    height: 100,
     borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  babyName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2D3748',
-  },
-  sessionInfo: {
-    fontSize: 14,
-    color: '#718096',
-    marginTop: 5,
-  },
-  feedingArea: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    marginTop: 30,
-  },
-  breastContainer: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.5)',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    overflow: 'hidden',
     position: 'relative',
   },
-  breast: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
+  bottleActive: {
+    borderColor: '#FFB6C1',
+    backgroundColor: 'rgba(255,255,255,0.5)',
   },
-  leftBreast: {
-    backgroundColor: '#4299E1',
-  },
-  rightBreast: {
-    backgroundColor: '#FF6B9D',
-  },
-  activeBreast: {
-    shadowColor: '#FF6B9D',
-    shadowOpacity: 0.4,
-    elevation: 12,
-  },
-  inactiveBreast: {
-    opacity: 0.5,
-  },
-  breastInner: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  breastContent: {
-    alignItems: 'center',
-  },
-  breastLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2D3748',
-    marginTop: 5,
-  },
-  breastSublabel: {
-    fontSize: 12,
-    color: '#718096',
-  },
-  milkFlowContainer: {
+  liquidFill: {
     position: 'absolute',
-    top: 120,
-    width: 60,
-    height: 150,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  bottleIconContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  leftFlow: {
-    left: 30,
-  },
-  rightFlow: {
-    right: 30,
+  tube: {
+    width: 4,
+    height: 120,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    marginVertical: 8,
+    borderRadius: 2,
+    position: 'relative',
+    overflow: 'visible',
   },
   milkDrop: {
     position: 'absolute',
+    left: -2,
     top: 0,
-  },
-  milkDropInner: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#FFE5F0',
   },
-  milkStream: {
-    width: 2,
-    height: 100,
-    backgroundColor: '#E2E8F0',
-    position: 'absolute',
-    top: 10,
+  bottleStats: {
+    marginTop: 8,
   },
-  breastStats: {
-    marginTop: 20,
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 10,
-    minWidth: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#718096',
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2D3748',
-    marginTop: 2,
-  },
-  stomachContainer: {
-    alignItems: 'center',
-    marginTop: 30,
-  },
-  stomachOutline: {
-    width: 150,
-    height: 150,
-    borderWidth: 3,
-    borderColor: '#48BB78',
-    borderRadius: 75,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    position: 'relative',
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  stomachLabel: {
-    position: 'absolute',
-    top: 10,
+  bottleStatText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#48BB78',
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
   },
-  stomachFill: {
+  bottleStatTextActive: {
+    color: 'white',
+    fontSize: 16,
+  },
+  babyContainer: {
+    alignItems: 'center',
+    marginTop: 80,
+  },
+  babyLabel: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+  },
+  sideSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
     width: '100%',
-    backgroundColor: '#48BB78',
-    borderRadius: 72,
-    position: 'absolute',
-    bottom: 0,
   },
-  stomachStats: {
-    position: 'absolute',
-    bottom: 10,
+  sideButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
   },
-  totalStat: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#2D3748',
+  sideButtonActive: {
+    backgroundColor: 'white',
   },
-  controlArea: {
+  sideButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  sideButtonTextActive: {
+    color: '#FF69B4',
+  },
+  controlButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 40,
-    marginTop: 40,
-    paddingBottom: 40,
+    gap: 12,
+    width: '100%',
+    marginTop: 12,
+  },
+  startButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+    borderRadius: 16,
+    gap: 8,
+  },
+  startButtonText: {
+    fontSize: 20,
+    fontWeight: '700',
   },
   controlButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    minWidth: 120,
     justifyContent: 'center',
-  },
-  bottleButton: {
-    backgroundColor: '#667eea',
-  },
-  stopButton: {
-    backgroundColor: '#DC3545',
+    padding: 14,
+    borderRadius: 12,
+    gap: 6,
   },
   controlButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  totalStatsCard: {
+    marginTop: 16,
+    padding: 20,
+    borderRadius: 16,
+  },
+  totalStatsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  totalStatsTitle: {
+    flex: 1,
+  },
+  totalStatsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  totalStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+  },
+  totalStatIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  totalStatValue: {
+    marginBottom: 4,
+  },
+  totalStatLabel: {
+    textAlign: 'center',
+  },
+  sideStatsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  sideStatCard: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  sideStatTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  sideStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  sideStatDetail: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  historyCard: {
+    marginTop: 16,
+    marginBottom: 24,
+    padding: 20,
+    borderRadius: 16,
+  },
+  historyTitle: {
+    marginBottom: 16,
+  },
+  historyStatsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  historyStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+  },
+  historyStatValue: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  historyStatLabel: {
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    padding: 24,
+    borderRadius: 24,
+  },
+  modalTitle: {
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalStats: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  modalStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+  },
+  modalStatValue: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  modalStatLabel: {
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
-    marginLeft: 8,
+    fontWeight: '700',
+  },
+  // One-Handed Mode Styles
+  headerControls: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+  },
+  oneHandedToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
+  },
+  oneHandedToggleActive: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+  },
+  oneHandedToggleText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
+  oneHandedToggleTextActive: {
+    color: '#FFFFFF',
   },
 });
-
-export default FeedingScreen;
