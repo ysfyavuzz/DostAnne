@@ -10,11 +10,13 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch, addActivity } from '../store/store';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AppHeader } from '../components/ui/AppHeader';
 
 type ActivityType = 'feeding' | 'sleep' | 'diaper' | 'health' | 'play' | 'milestone';
 
@@ -193,7 +195,9 @@ const ActivitiesScreenNew = () => {
   const stylesObj = styles(colors, typography, spacing, borderRadius, shadows, isDark);
 
   return (
-    <View style={stylesObj.container}>
+    <SafeAreaView style={stylesObj.safeArea} edges={['bottom']}>
+      <AppHeader title="Takip" />
+      <View style={stylesObj.container}>
       {/* Filter Tabs */}
       <ScrollView 
         horizontal 
@@ -357,13 +361,17 @@ const ActivitiesScreenNew = () => {
         </View>
       </Modal>
     </View>
+    </SafeAreaView>
   );
 };
 
 const styles = (colors: any, typography: any, spacing: any, borderRadius: any, shadows: any, isDark: boolean) => StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: isDark ? colors.background.dark : colors.background.light,
+  },
+  container: {
+    flex: 1,
   },
   filterContainer: {
     maxHeight: 60,

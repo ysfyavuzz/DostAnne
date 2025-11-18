@@ -9,12 +9,14 @@ import {
   RefreshControl,
   Animated,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { AppHeader } from '../components/ui/AppHeader';
 
 const { width } = Dimensions.get('window');
 
@@ -167,12 +169,14 @@ const HomeScreenNew = () => {
   const styles = createStyles(colors, typography, spacing, borderRadius, shadows, isDark);
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <AppHeader title="Ana Sayfa" />
+      <ScrollView 
+        style={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
       {/* Header Section */}
       <LinearGradient
         colors={colors.gradients.primary}
@@ -312,13 +316,17 @@ const HomeScreenNew = () => {
 
       <View style={{ height: spacing['4xl'] }} />
     </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const createStyles = (colors: any, typography: any, spacing: any, borderRadius: any, shadows: any, isDark: boolean) => StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: isDark ? colors.background.dark : colors.background.light,
+  },
+  container: {
+    flex: 1,
   },
   header: {
     padding: spacing['2xl'],

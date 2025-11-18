@@ -114,6 +114,40 @@ export const Colors = {
     milestone: '#3B82F6',
   },
 
+  // DostAnne Brand Colors
+  brand: {
+    green: {
+      50: '#F0FDF4',
+      100: '#DCFCE7',
+      200: '#BBF7D0',
+      300: '#86EFAC',
+      400: '#4ADE80',
+      500: '#22C55E',
+      600: '#16A34A',
+      700: '#15803D',
+    },
+    orange: {
+      50: '#FFF7ED',
+      100: '#FFEDD5',
+      200: '#FED7AA',
+      300: '#FDBA74',
+      400: '#FB923C',
+      500: '#F97316',
+      600: '#EA580C',
+      700: '#C2410C',
+    },
+    pink: {
+      50: '#FFF0F5',
+      100: '#FFE0EC',
+      200: '#FFC9DD',
+      300: '#FFA3C7',
+      400: '#FF6B9D',
+      500: '#FF4785',
+      600: '#E63670',
+      700: '#C22960',
+    },
+  },
+
   // Gradient Presets
   gradients: {
     primary: ['#FF6B9D', '#FF4785'],
@@ -122,6 +156,9 @@ export const Colors = {
     sunset: ['#F59E0B', '#EF4444'],
     ocean: ['#06B6D4', '#3B82F6'],
     purple: ['#A855F7', '#8B5CF6'],
+    pink: ['#FF6B9D', '#FF4785'],
+    orange: ['#F97316', '#EA580C'],
+    green: ['#22C55E', '#16A34A'],
   },
 } as const;
 
