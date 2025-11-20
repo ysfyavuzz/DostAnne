@@ -49,7 +49,7 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
       case 'success':
         return colors.gradients.success;
       case 'danger':
-        return [colors.error[400], colors.error[600]];
+        return [colors.error[400], colors.error[600]] as readonly [string, string, ...string[]];
       default:
         return colors.gradients.primary;
     }

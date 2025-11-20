@@ -261,6 +261,8 @@ export default function FeedingAnalysisChart({
           data={getTimeDistributionData()}
           width={screenWidth - 40}
           height={200}
+          yAxisLabel=""
+          yAxisSuffix=""
           chartConfig={chartConfig}
           style={styles.chart}
           showValuesOnTopOfBars={true}

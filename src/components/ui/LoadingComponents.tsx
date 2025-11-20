@@ -6,6 +6,7 @@ import {
   Dimensions,
   Animated,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/src/hooks/useTheme';
@@ -181,7 +182,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
 interface PullToRefreshIndicatorProps {
   refreshing: boolean;
-  progress: number;
+  progress: Animated.Value;
 }
 
 export const PullToRefreshIndicator: React.FC<PullToRefreshIndicatorProps> = ({

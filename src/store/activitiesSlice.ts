@@ -22,12 +22,19 @@ interface ActivitiesState {
   loading: boolean;
   error: string | null;
   currentActivity?: Activity;
+  baby?: {
+    id: string;
+    name: string;
+    birthDate: string;
+    ageInMonths: number;
+  } | null;
 }
 
 const initialState: ActivitiesState = {
   activities: [],
   loading: false,
   error: null,
+  baby: null,
 };
 
 const activitiesSlice = createSlice({
@@ -61,6 +68,9 @@ const activitiesSlice = createSlice({
     clearActivities: (state) => {
       state.activities = [];
     },
+    setBaby: (state, action: PayloadAction<ActivitiesState['baby']>) => {
+      state.baby = action.payload;
+    },
   },
 });
 
@@ -73,6 +83,7 @@ export const {
   setActivities,
   setCurrentActivity,
   clearActivities,
+  setBaby,
 } = activitiesSlice.actions;
 
 export default activitiesSlice.reducer;

@@ -222,7 +222,7 @@ class DatabaseService {
     const result = await this.db.runAsync(
       `INSERT INTO baby_profiles (name, birthDate, gender, weight, height, bloodType, photo, createdAt, updatedAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [baby.name, baby.birthDate, baby.gender, baby.weight, baby.height, baby.bloodType, baby.photo, now, now]
+      [baby.name, baby.birthDate, baby.gender, baby.weight, baby.height, baby.bloodType ?? null, baby.photo ?? null, now, now]
     );
 
     if (result.changes > 0) {
@@ -280,7 +280,7 @@ class DatabaseService {
     const result = await this.db.runAsync(
       `INSERT INTO activity_records (type, startTime, endTime, duration, notes, babyId, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [activity.type, activity.startTime, activity.endTime, activity.duration, activity.notes, activity.babyId, now]
+      [activity.type, activity.startTime, activity.endTime ?? null, activity.duration ?? null, activity.notes ?? null, activity.babyId, now]
     );
 
     if (result.changes > 0) {
