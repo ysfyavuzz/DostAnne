@@ -3,19 +3,17 @@
  * https://docs.expo.dev/guides/color-schemes/
  */
 
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/src/hooks/useTheme';
 
+// Bu dosya artık kullanılmayacak, ancak diğer dosyaların import hatalarını önlemek için boş bırakıldı.
+// Tüm tema renkleri artık useThemedStyles hook'u üzerinden erişilebilir.
 export function useThemeColor(
   props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+  colorName: string
 ) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
-
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
+  const { colors } = useTheme();
+  
+  // Bu fonksiyonun işlevi artık useThemedStyles içinde yapılıyor.
+  // Geriye dönük uyumluluk için geçici bir çözüm.
+  return colors.text.primary; 
 }

@@ -3,7 +3,7 @@ import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeType = 'light' | 'dark' | 'auto';
-export type AccentColor = 'blue' | 'green' | 'purple' | 'pink' | 'orange';
+export type AccentColor = 'primary' | 'secondary' | 'blue' | 'purple' | 'pink';
 
 export interface Theme {
   type: ThemeType;
@@ -26,52 +26,54 @@ export interface Theme {
   };
 }
 
+import { Colors, DarkColors } from '../constants/Colors';
+
 const lightColors = {
-  primary: '#4A90E2',
-  secondary: '#5AC8FA',
-  background: '#FFFFFF',
-  card: '#FFFFFF',
-  text: '#000000',
-  textSecondary: '#666666',
-  border: '#E9ECEF',
-  success: '#4ECDC4',
-  warning: '#FFA500',
-  error: '#FF6B6B',
-  info: '#4A90E2',
-  tabBar: '#FFFFFF',
-  tabBarActive: '#4A90E2',
-  header: '#4A90E2',
+  primary: Colors.primary[500],
+  secondary: Colors.secondary[500],
+  background: Colors.background.light,
+  card: Colors.background.card,
+  text: Colors.text.primary,
+  textSecondary: Colors.text.secondary,
+  border: Colors.neutral[200],
+  success: Colors.success[500],
+  warning: Colors.warning[500],
+  error: Colors.error[500],
+  info: Colors.secondary[500],
+  tabBar: Colors.background.card,
+  tabBarActive: Colors.primary[500],
+  header: Colors.primary[500],
 };
 
 const darkColors = {
-  primary: '#5AC8FA',
-  secondary: '#4A90E2',
-  background: '#1C1C1E',
-  card: '#2C2C2E',
-  text: '#FFFFFF',
-  textSecondary: '#98989F',
-  border: '#38383A',
-  success: '#30D158',
-  warning: '#FF9F0A',
-  error: '#FF453A',
-  info: '#5AC8FA',
-  tabBar: '#2C2C2E',
-  tabBarActive: '#5AC8FA',
-  header: '#2C2C2E',
+  primary: DarkColors.primary[500],
+  secondary: DarkColors.secondary[500],
+  background: DarkColors.background.light,
+  card: DarkColors.background.card,
+  text: DarkColors.text.primary,
+  textSecondary: DarkColors.text.secondary,
+  border: DarkColors.neutral[700],
+  success: DarkColors.success[500],
+  warning: DarkColors.warning[500],
+  error: DarkColors.error[500],
+  info: DarkColors.secondary[500],
+  tabBar: DarkColors.background.card,
+  tabBarActive: DarkColors.primary[500],
+  header: DarkColors.primary[500],
 };
 
 const accentColors: Record<AccentColor, { light: string; dark: string }> = {
+  primary: { light: Colors.primary[500], dark: DarkColors.primary[500] },
+  secondary: { light: Colors.secondary[500], dark: DarkColors.secondary[500] },
   blue: { light: '#4A90E2', dark: '#5AC8FA' },
-  green: { light: '#34C759', dark: '#30D158' },
   purple: { light: '#AF52DE', dark: '#BF5AF2' },
   pink: { light: '#FF2D92', dark: '#FF2D92' },
-  orange: { light: '#FF9500', dark: '#FF9F0A' },
 };
 
 export function useTheme() {
   const deviceColorScheme = useColorScheme();
   const [themeType, setThemeType] = useState<ThemeType>('auto');
-  const [accentColor, setAccentColor] = useState<AccentColor>('blue');
+  const [accentColor, setAccentColor] = useState<AccentColor>('primary');
 
   useEffect(() => {
     loadThemeSettings();
@@ -127,7 +129,7 @@ export function useTheme() {
         ...baseColors,
         primary: accent,
         tabBarActive: accent,
-        header: isDark ? '#2C2C2E' : accent,
+        header: isDark ? baseColors.card : accent,
       },
     };
   };

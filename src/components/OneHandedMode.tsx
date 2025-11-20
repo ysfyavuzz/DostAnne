@@ -7,6 +7,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -33,6 +34,10 @@ interface OneHandedModeProps {
 }
 
 const OneHandedMode: React.FC<OneHandedModeProps> = ({
+  // ... props
+}) => {
+  const { colors, shadows, spacing, borderRadius } = useThemedStyles();
+  const [showQuickActions, setShowQuickActions] = useState(false);
   onStartLeft,
   onStartRight,
   onStop,
@@ -58,37 +63,37 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background.light }]}>
       {/* Active Session Display - Top Area */}
       {isActive && (
-        <View style={styles.activeSessionCard}>
+        <View style={[styles.activeSessionCard, { backgroundColor: colors.card, ...shadows.lg }]}>
           <View style={styles.activeSessionHeader}>
-            <View style={styles.sideIndicator}>
+            <View style={[styles.sideIndicator, { backgroundColor: colors.primary[500] }]}>
               <Ionicons
                 name={currentSide === 'left' ? 'chevron-back' : 'chevron-forward'}
                 size={24}
-                color="#FFFFFF"
+                color={colors.text.inverse}
               />
-              <Text style={styles.sideText}>
+              <Text style={[styles.sideText, { color: colors.text.inverse }]}>
                 {currentSide === 'left' ? 'Sol Meme' : 'Sağ Meme'}
               </Text>
             </View>
             {isPaused && (
-              <View style={styles.pausedBadge}>
-                <Ionicons name="pause" size={16} color="#F59E0B" />
-                <Text style={styles.pausedText}>Durakladı</Text>
+              <View style={[styles.pausedBadge, { backgroundColor: colors.warning[100] }]}>
+                <Ionicons name="pause" size={16} color={colors.warning[700]} />
+                <Text style={[styles.pausedText, { color: colors.warning[700] }]}>Durakladı</Text>
               </View>
             )}
           </View>
 
           {/* Timer Display - Very Large and Visible */}
-          <Text style={styles.timerDisplay}>{formatDuration(duration)}</Text>
+          <Text style={[styles.timerDisplay, { color: colors.text.primary }]}>{formatDuration(duration)}</Text>
 
           {/* Quick Info */}
           <View style={styles.quickInfo}>
             <View style={styles.infoItem}>
-              <Ionicons name="time-outline" size={18} color="#6B7280" />
-              <Text style={styles.infoText}>
+              <Ionicons name="time-outline" size={18} color={colors.text.secondary} />
+              <Text style={[styles.infoText, { color: colors.text.secondary }]}>
                 {isPaused ? 'Duraklatıldı' : 'Devam ediyor'}
               </Text>
             </View>
@@ -97,7 +102,7 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
       )}
 
       {/* Bottom Control Panel - THUMB REACH ZONE */}
-      <View style={styles.bottomPanel}>
+      <View style={[styles.bottomPanel, { backgroundColor: colors.background.light }]}>
         {!isActive ? (
           // Start Buttons - Side by Side for Quick Access
           <View style={styles.startButtonsContainer}>
@@ -107,14 +112,14 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#3B82F6', '#2563EB']}
+                colors={colors.gradients.primary}
                 style={styles.gradientButton}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="chevron-back" size={32} color="#FFFFFF" />
-                <Text style={styles.buttonText}>Sol Meme</Text>
-                <Text style={styles.buttonSubtext}>Başlat</Text>
+                <Ionicons name="chevron-back" size={32} color={colors.text.inverse} />
+                <Text style={[styles.buttonText, { color: colors.text.inverse }]}>Sol Meme</Text>
+                <Text style={[styles.buttonSubtext, { color: colors.text.inverse }]}>Başlat</Text>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -124,14 +129,14 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#8B5CF6', '#7C3AED']}
+                colors={colors.gradients.secondary}
                 style={styles.gradientButton}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="chevron-forward" size={32} color="#FFFFFF" />
-                <Text style={styles.buttonText}>Sağ Meme</Text>
-                <Text style={styles.buttonSubtext}>Başlat</Text>
+                <Ionicons name="chevron-forward" size={32} color={colors.text.inverse} />
+                <Text style={[styles.buttonText, { color: colors.text.inverse }]}>Sağ Meme</Text>
+                <Text style={[styles.buttonSubtext, { color: colors.text.inverse }]}>Başlat</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -141,33 +146,33 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
             {/* Main Actions Row */}
             <View style={styles.mainActionsRow}>
               <TouchableOpacity
-                style={[styles.actionButton, styles.pauseButton]}
+                style={[styles.actionButton, { backgroundColor: colors.warning[500], ...shadows.md }]}
                 onPress={() => handleButtonPress(onPause)}
                 activeOpacity={0.8}
               >
                 <Ionicons
                   name={isPaused ? 'play' : 'pause'}
                   size={36}
-                  color="#FFFFFF"
+                  color={colors.text.inverse}
                 />
-                <Text style={styles.actionButtonText}>
+                <Text style={[styles.actionButtonText, { color: colors.text.inverse }]}>
                   {isPaused ? 'Devam' : 'Duraklat'}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.actionButton, styles.stopButton]}
+                style={[styles.actionButton, { backgroundColor: colors.error[500], ...shadows.md }]}
                 onPress={() => handleButtonPress(onStop)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="stop" size={36} color="#FFFFFF" />
-                <Text style={styles.actionButtonText}>Bitir</Text>
+                <Ionicons name="stop" size={36} color={colors.text.inverse} />
+                <Text style={[styles.actionButtonText, { color: colors.text.inverse }]}>Bitir</Text>
               </TouchableOpacity>
             </View>
 
             {/* Quick Switch Side Button */}
             <TouchableOpacity
-              style={styles.switchSideButton}
+              style={[styles.switchSideButton, { backgroundColor: colors.background.soft, borderColor: colors.border }]}
               onPress={() => {
                 handleButtonPress(() => {
                   onStop();
@@ -182,8 +187,8 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
               }}
               activeOpacity={0.8}
             >
-              <Ionicons name="swap-horizontal" size={24} color="#6366F1" />
-              <Text style={styles.switchSideText}>Taraf Değiştir</Text>
+              <Ionicons name="swap-horizontal" size={24} color={colors.primary[500]} />
+              <Text style={[styles.switchSideText, { color: colors.primary[500] }]}>Taraf Değiştir</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -191,11 +196,11 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
         {/* Bottom Info Bar */}
         <View style={styles.infoBar}>
           <View style={styles.infoBarItem}>
-            <Ionicons name="hand-left-outline" size={20} color="#9CA3AF" />
-            <Text style={styles.infoBarText}>Tek El Modu</Text>
+            <Ionicons name="hand-left-outline" size={20} color={colors.text.tertiary} />
+            <Text style={[styles.infoBarText, { color: colors.text.secondary }]}>Tek El Modu</Text>
           </View>
-          <View style={styles.infoBarDot} />
-          <Text style={styles.infoBarText}>
+          <View style={[styles.infoBarDot, { backgroundColor: colors.text.tertiary }]} />
+          <Text style={[styles.infoBarText, { color: colors.text.secondary }]}>
             {isActive ? 'Aktif Seans' : 'Hazır'}
           </Text>
         </View>
@@ -203,9 +208,9 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
 
       {/* Helper Text - Only show when not active */}
       {!isActive && (
-        <View style={styles.helperContainer}>
-          <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
-          <Text style={styles.helperText}>
+        <View style={[styles.helperContainer, { backgroundColor: colors.background.soft }]}>
+          <Ionicons name="information-circle-outline" size={20} color={colors.text.secondary} />
+          <Text style={[styles.helperText, { color: colors.text.secondary }]}>
             Tek elle kolayca kullanabilirsiniz. Büyük butonlar baş parmak erişim
             bölgesinde.
           </Text>
@@ -221,16 +226,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   activeSessionCard: {
-    backgroundColor: '#1F2937',
     margin: 20,
     marginTop: 40,
     borderRadius: 24,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 12,
   },
   activeSessionHeader: {
     flexDirection: 'row',
@@ -241,7 +240,6 @@ const styles = StyleSheet.create({
   sideIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 12,
@@ -250,12 +248,10 @@ const styles = StyleSheet.create({
   sideText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   pausedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -264,12 +260,10 @@ const styles = StyleSheet.create({
   pausedText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#F59E0B',
   },
   timerDisplay: {
     fontSize: 72,
     fontWeight: '900',
-    color: '#FFFFFF',
     textAlign: 'center',
     letterSpacing: -2,
     fontVariant: ['tabular-nums'],
@@ -287,13 +281,11 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#9CA3AF',
     fontWeight: '600',
   },
   bottomPanel: {
     paddingHorizontal: 20,
     paddingBottom: 40,
-    backgroundColor: '#FFFFFF',
   },
   startButtonsContainer: {
     flexDirection: 'row',
@@ -305,11 +297,6 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
   },
   leftButton: {},
   rightButton: {},
@@ -322,12 +309,10 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
   },
   buttonSubtext: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)',
   },
   activeControlsContainer: {
     gap: 16,
@@ -343,22 +328,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  pauseButton: {
-    backgroundColor: '#F59E0B',
-  },
-  stopButton: {
-    backgroundColor: '#EF4444',
   },
   actionButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
   },
   switchSideButton: {
     flexDirection: 'row',
@@ -366,15 +339,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     height: 56,
-    backgroundColor: '#EEF2FF',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#C7D2FE',
   },
   switchSideText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#6366F1',
   },
   infoBar: {
     flexDirection: 'row',
@@ -392,17 +362,14 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#D1D5DB',
   },
   infoBarText: {
     fontSize: 13,
-    color: '#6B7280',
     fontWeight: '600',
   },
   helperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
     marginHorizontal: 20,
     marginBottom: 20,
     padding: 16,
@@ -412,7 +379,6 @@ const styles = StyleSheet.create({
   helperText: {
     flex: 1,
     fontSize: 13,
-    color: '#6B7280',
     lineHeight: 18,
   },
 });

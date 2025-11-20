@@ -4,32 +4,32 @@
  */
 
 export const Colors = {
-  // Primary Brand Colors
+  // Primary Brand Colors (Logo'dan gelen yeşil ve turuncu tonları)
   primary: {
-    50: '#FFF0F5',
-    100: '#FFE0EC',
-    200: '#FFC9DD',
-    300: '#FFA3C7',
-    400: '#FF6B9D',
-    500: '#FF4785',
-    600: '#E63670',
-    700: '#C22960',
-    800: '#9F1F52',
-    900: '#7A1840',
+    50: '#F7FCEF', // Açık Yeşil
+    100: '#EAF5D8',
+    200: '#D4E8B0',
+    300: '#BBD987',
+    400: '#9FC95F', // Ana Yeşil
+    500: '#86B83C',
+    600: '#6A912F',
+    700: '#4F6B23',
+    800: '#354618',
+    900: '#1C240C',
   },
 
-  // Secondary Colors
+  // Secondary Colors (Logo'dan gelen turuncu/şeftali tonları)
   secondary: {
-    50: '#EFF6FF',
-    100: '#DBEAFE',
-    200: '#BFDBFE',
-    300: '#93C5FD',
-    400: '#60A5FA',
-    500: '#3B82F6',
-    600: '#2563EB',
-    700: '#1D4ED8',
-    800: '#1E40AF',
-    900: '#1E3A8A',
+    50: '#FFF8F0', // Açık Turuncu
+    100: '#FFEEDD',
+    200: '#FFD9B3',
+    300: '#FFC08A',
+    400: '#FF9E5C',
+    500: '#FF7B2E', // Ana Turuncu
+    600: '#E66929',
+    700: '#BF5722',
+    800: '#99461C',
+    900: '#733415',
   },
 
   // Success
@@ -94,81 +94,75 @@ export const Colors = {
     dark: '#0F172A',
     card: '#FFFFFF',
     cardDark: '#1E293B',
+    // Yeni eklenen renkler
+    soft: '#F7FCEF', // Çok açık yeşil
+    softDark: '#1C240C', // Çok koyu yeşil
   },
 
   text: {
-    primary: '#111827',
-    secondary: '#6B7280',
-    tertiary: '#9CA3AF',
+    primary: '#1C240C', // Koyu yeşil
+    secondary: '#4F6B23', // Orta yeşil
+    tertiary: '#9FC95F', // Açık yeşil
     inverse: '#FFFFFF',
     disabled: '#D1D5DB',
   },
 
-  // Activity Type Colors
+  // Activity Type Colors (Yeni palete göre güncellendi)
   activity: {
-    feeding: '#FF6B9D',
-    sleep: '#8B5CF6',
-    diaper: '#10B981',
-    health: '#EF4444',
-    play: '#F59E0B',
-    milestone: '#3B82F6',
+    feeding: '#FF7B2E', // Turuncu
+    sleep: '#4A90E2', // Mavi
+    diaper: '#9FC95F', // Yeşil
+    health: '#EF4444', // Kırmızı
+    play: '#FFC08A', // Açık Turuncu
+    milestone: '#8B5CF6', // Mor
   },
 
-  // DostAnne Brand Colors
+  // DostAnne Brand Colors (Logo'dan gelen ana renkler)
   brand: {
     green: {
-      50: '#F0FDF4',
-      100: '#DCFCE7',
-      200: '#BBF7D0',
-      300: '#86EFAC',
-      400: '#4ADE80',
-      500: '#22C55E',
-      600: '#16A34A',
-      700: '#15803D',
+      50: '#F7FCEF',
+      100: '#EAF5D8',
+      200: '#D4E8B0',
+      300: '#BBD987',
+      400: '#9FC95F',
+      500: '#86B83C',
+      600: '#6A912F',
+      700: '#4F6B23',
     },
     orange: {
-      50: '#FFF7ED',
-      100: '#FFEDD5',
-      200: '#FED7AA',
-      300: '#FDBA74',
-      400: '#FB923C',
-      500: '#F97316',
-      600: '#EA580C',
-      700: '#C2410C',
-    },
-    pink: {
-      50: '#FFF0F5',
-      100: '#FFE0EC',
-      200: '#FFC9DD',
-      300: '#FFA3C7',
-      400: '#FF6B9D',
-      500: '#FF4785',
-      600: '#E63670',
-      700: '#C22960',
+      50: '#FFF8F0',
+      100: '#FFEEDD',
+      200: '#FFD9B3',
+      300: '#FFC08A',
+      400: '#FF9E5C',
+      500: '#FF7B2E',
+      600: '#E66929',
+      700: '#BF5722',
     },
   },
 
-  // Gradient Presets
+  // Gradient Presets (Yeni palete göre güncellendi)
   gradients: {
-    primary: ['#FF6B9D', '#FF4785'],
-    secondary: ['#3B82F6', '#2563EB'],
-    success: ['#10B981', '#059669'],
-    sunset: ['#F59E0B', '#EF4444'],
-    ocean: ['#06B6D4', '#3B82F6'],
-    purple: ['#A855F7', '#8B5CF6'],
-    pink: ['#FF6B9D', '#FF4785'],
-    orange: ['#F97316', '#EA580C'],
-    green: ['#22C55E', '#16A34A'],
+    primary: ['#9FC95F', '#86B83C'], // Yeşil Gradient
+    secondary: ['#FF7B2E', '#E66929'], // Turuncu Gradient
+    success: ['#86B83C', '#6A912F'],
+    danger: ['#EF4444', '#DC2626'],
+    info: ['#4A90E2', '#3B82F6'],
+    sleep: ['#4A90E2', '#3B82F6'],
+    feeding: ['#FF7B2E', '#E66929'],
+    diaper: ['#9FC95F', '#86B83C'],
   },
 } as const;
 
 export const DarkColors = {
   ...Colors,
   background: {
-    light: '#0F172A',
-    dark: '#020617',
-    card: '#1E293B',
-    cardDark: '#0F172A',
+    light: '#111827', // Koyu arka plan
+    dark: '#000000', // En koyu arka plan
+    card: '#1F2937', // Kart arka planı
+    cardDark: '#111827',
+    soft: '#1F2937', // Yumuşak koyu
+    softDark: '#111827',
   },
   text: {
     primary: '#F9FAFB',

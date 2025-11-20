@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/src/hooks/useTheme';
+import { useThemedStyles } from '@/src/hooks/useThemedStyles';
 import { createText } from '@/src/components/ThemedText';
 
 const ThemedText = createText();
@@ -28,6 +28,7 @@ export const Shimmer: React.FC<ShimmerProps> = ({
   borderRadius = 4,
   style,
 }) => {
+  const { colors } = useThemedStyles();
   const animatedValue = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -60,7 +61,7 @@ export const Shimmer: React.FC<ShimmerProps> = ({
         {
           width,
           height,
-          backgroundColor: '#f0f0f0',
+          backgroundColor: colors.neutral[200],
           borderRadius,
           overflow: 'hidden',
         },
@@ -75,7 +76,7 @@ export const Shimmer: React.FC<ShimmerProps> = ({
         }}
       >
         <LinearGradient
-          colors={['#f0f0f0', '#e0e0e0', '#f0f0f0']}
+          colors={[colors.neutral[200], colors.neutral[100], colors.neutral[200]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{
@@ -166,14 +167,14 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   visible,
   message = 'Yükleniyor...',
 }) => {
-  const { colors } = useTheme();
+  const { colors, shadows } = useThemedStyles();
 
   if (!visible) return null;
 
   return (
     <View style={styles.overlay}>
-      <View style={[styles.loadingCard, { backgroundColor: colors.card }]}>
-        <ActivityIndicator size="large" color="#4A90E2" />
+      <View style={[styles.loadingCard, { backgroundColor: colors.card, ...shadows.md }]}>
+        <ActivityIndicator size="large" color={colors.primary[500]} />
         <ThemedText style={styles.loadingText}>{message}</ThemedText>
       </View>
     </View>
@@ -189,6 +190,7 @@ export const PullToRefreshIndicator: React.FC<PullToRefreshIndicatorProps> = ({
   refreshing,
   progress,
 }) => {
+  const { colors } = useThemedStyles();
   const rotate = progress.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -199,10 +201,10 @@ export const PullToRefreshIndicator: React.FC<PullToRefreshIndicatorProps> = ({
       <Animated.View style={{ transform: [{ rotate }] }}>
         <ActivityIndicator
           size="small"
-          color={refreshing ? '#4A90E2' : '#ccc'}
+          color={refreshing ? colors.primary[500] : colors.neutral[400]}
         />
       </Animated.View>
-      <ThemedText style={styles.refreshText}>
+      <ThemedText style={[styles.refreshText, { color: colors.text.secondary }]}>
         {refreshing ? 'Yenileniyor...' : 'Yenilemek için çekin'}
       </ThemedText>
     </View>
@@ -224,19 +226,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   actionLabel,
   onAction,
 }) => {
-  const { colors } = useTheme();
+  const { colors, shadows } = useThemedStyles();
 
   return (
-    <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
-      <Text style={styles.emptyIcon}>{icon}</Text>
-      <ThemedText style={styles.emptyTitle}>{title}</ThemedText>
-      <ThemedText style={styles.emptySubtitle}>{subtitle}</ThemedText>
+    <View style={[styles.emptyState, { backgroundColor: colors.card, ...shadows.sm }]}>
+      <Text style={[styles.emptyIcon, { color: colors.primary[500] }]}>{icon}</Text>
+      <ThemedText style={[styles.emptyTitle, { color: colors.text.primary }]}>{title}</ThemedText>
+      <ThemedText style={[styles.emptySubtitle, { color: colors.text.secondary }]}>{subtitle}</ThemedText>
       {actionLabel && onAction && (
         <TouchableOpacity
-          style={[styles.emptyActionButton, { backgroundColor: colors.primary }]}
+          style={[styles.emptyActionButton, { backgroundColor: colors.primary[500], ...shadows.sm }]}
           onPress={onAction}
         >
-          <ThemedText style={styles.emptyActionText}>{actionLabel}</ThemedText>
+          <ThemedText style={[styles.emptyActionText, { color: colors.text.inverse }]}>{actionLabel}</ThemedText>
         </TouchableOpacity>
       )}
     </View>
@@ -256,19 +258,19 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   retryLabel = 'Tekrar Dene',
   onRetry,
 }) => {
-  const { colors } = useTheme();
+  const { colors, shadows } = useThemedStyles();
 
   return (
-    <View style={[styles.errorState, { backgroundColor: colors.card }]}>
-      <Text style={styles.errorIcon}>⚠️</Text>
-      <ThemedText style={styles.errorTitle}>{title}</ThemedText>
-      <ThemedText style={styles.errorSubtitle}>{subtitle}</ThemedText>
+    <View style={[styles.errorState, { backgroundColor: colors.card, ...shadows.sm }]}>
+      <Text style={styles.errorIcon}>🚨</Text>
+      <ThemedText style={[styles.errorTitle, { color: colors.text.primary }]}>{title}</ThemedText>
+      <ThemedText style={[styles.errorSubtitle, { color: colors.text.secondary }]}>{subtitle}</ThemedText>
       {onRetry && (
         <TouchableOpacity
-          style={[styles.errorActionButton, { backgroundColor: colors.primary }]}
+          style={[styles.errorActionButton, { backgroundColor: colors.error[500], ...shadows.sm }]}
           onPress={onRetry}
         >
-          <ThemedText style={styles.errorActionText}>{retryLabel}</ThemedText>
+          <ThemedText style={[styles.errorActionText, { color: colors.text.inverse }]}>{retryLabel}</ThemedText>
         </TouchableOpacity>
       )}
     </View>
@@ -279,7 +281,7 @@ const styles = StyleSheet.create({
   cardShimmer: {
     flexDirection: 'row',
     padding: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // Bu kısım useThemedStyles'tan gelmeli
     borderRadius: 12,
     marginBottom: 10,
   },
@@ -304,13 +306,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // Bu kısım useThemedStyles'tan gelmeli
     borderRadius: 12,
     marginHorizontal: 4,
   },
   chartShimmer: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // Bu kısım useThemedStyles'tan gelmeli
     borderRadius: 12,
     marginBottom: 20,
   },
@@ -360,6 +362,7 @@ const styles = StyleSheet.create({
   emptyIcon: {
     fontSize: 48,
     marginBottom: 15,
+    // color: colors.primary[500]
   },
   emptyTitle: {
     fontSize: 16,
@@ -392,6 +395,7 @@ const styles = StyleSheet.create({
   errorIcon: {
     fontSize: 48,
     marginBottom: 15,
+    // color: colors.error[500]
   },
   errorTitle: {
     fontSize: 16,
