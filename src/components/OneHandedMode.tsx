@@ -14,14 +14,6 @@ import * as Haptics from 'expo-haptics';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// One-Handed Mode optimizes UI for single-hand use while breastfeeding
-// Key features:
-// - Large touch targets (min 44pt as per Apple HIG)
-// - Bottom-aligned controls (thumb reach zone)
-// - Quick actions without scrolling
-// - Minimal text input required
-// - Haptic feedback for confirmation
-
 interface OneHandedModeProps {
   onStartLeft: () => void;
   onStartRight: () => void;
@@ -34,10 +26,6 @@ interface OneHandedModeProps {
 }
 
 const OneHandedMode: React.FC<OneHandedModeProps> = ({
-  // ... props
-}) => {
-  const { colors, shadows, spacing, borderRadius } = useThemedStyles();
-  const [showQuickActions, setShowQuickActions] = useState(false);
   onStartLeft,
   onStartRight,
   onStop,
@@ -47,6 +35,7 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
   currentSide,
   duration,
 }) => {
+  const { colors, shadows, spacing, borderRadius } = useThemedStyles();
   const [showQuickActions, setShowQuickActions] = useState(false);
 
   const formatDuration = (seconds: number): string => {
@@ -64,7 +53,6 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.light }]}>
-      {/* Active Session Display - Top Area */}
       {isActive && (
         <View style={[styles.activeSessionCard, { backgroundColor: colors.card, ...shadows.lg }]}>
           <View style={styles.activeSessionHeader}>
@@ -86,10 +74,8 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
             )}
           </View>
 
-          {/* Timer Display - Very Large and Visible */}
           <Text style={[styles.timerDisplay, { color: colors.text.primary }]}>{formatDuration(duration)}</Text>
 
-          {/* Quick Info */}
           <View style={styles.quickInfo}>
             <View style={styles.infoItem}>
               <Ionicons name="time-outline" size={18} color={colors.text.secondary} />
@@ -101,10 +87,8 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
         </View>
       )}
 
-      {/* Bottom Control Panel - THUMB REACH ZONE */}
       <View style={[styles.bottomPanel, { backgroundColor: colors.background.light }]}>
         {!isActive ? (
-          // Start Buttons - Side by Side for Quick Access
           <View style={styles.startButtonsContainer}>
             <TouchableOpacity
               style={[styles.largeButton, styles.leftButton]}
@@ -141,9 +125,7 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
             </TouchableOpacity>
           </View>
         ) : (
-          // Active Session Controls
           <View style={styles.activeControlsContainer}>
-            {/* Main Actions Row */}
             <View style={styles.mainActionsRow}>
               <TouchableOpacity
                 style={[styles.actionButton, { backgroundColor: colors.warning[500], ...shadows.md }]}
@@ -170,7 +152,6 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Quick Switch Side Button */}
             <TouchableOpacity
               style={[styles.switchSideButton, { backgroundColor: colors.background.soft, borderColor: colors.border }]}
               onPress={() => {
@@ -193,7 +174,6 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
           </View>
         )}
 
-        {/* Bottom Info Bar */}
         <View style={styles.infoBar}>
           <View style={styles.infoBarItem}>
             <Ionicons name="hand-left-outline" size={20} color={colors.text.tertiary} />
@@ -206,7 +186,6 @@ const OneHandedMode: React.FC<OneHandedModeProps> = ({
         </View>
       </View>
 
-      {/* Helper Text - Only show when not active */}
       {!isActive && (
         <View style={[styles.helperContainer, { backgroundColor: colors.background.soft }]}>
           <Ionicons name="information-circle-outline" size={20} color={colors.text.secondary} />

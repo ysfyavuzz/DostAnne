@@ -4,10 +4,12 @@ import { Platform } from 'react-native';
 
 // Configure notifications
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
+  handleNotification: async (notification) => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowList: true, // Eksik property
+    shouldShowBanner: true, // Eksik property
   }),
 });
 
@@ -93,12 +95,11 @@ class NotificationService {
 
       const trigger = notification.recurring
         ? {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            type: 'daily', // Expo Notifications'da 'daily' stringi kullanılıyor
             hour: notification.scheduledTime.getHours(),
             minute: notification.scheduledTime.getMinutes(),
           }
         : {
-            type: Notifications.SchedulableTriggerInputTypes.DATE,
             date: notification.scheduledTime,
           };
 

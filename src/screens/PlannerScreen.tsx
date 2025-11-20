@@ -159,15 +159,15 @@ export default function PlannerScreenNew() {
     if (items.length === 0) return null;
 
     return (
-      <View style={[styles.groupCard, { backgroundColor: 'white' }, shadows.small]}>
+      <View style={[styles.groupCard, { backgroundColor: 'white' }, shadows.sm]}>
         <View style={styles.groupHeader}>
           <View style={[styles.groupIcon, { backgroundColor: color + '20' }]}>
             <Ionicons name={icon} size={24} color={color} />
           </View>
-          <Text style={[styles.groupTitle, typography.h4, { color: colors.text }]}>
+          <Text style={[styles.groupTitle, typography.h4, { color: colors.text.primary }]}>
             {title}
           </Text>
-          <Text style={[styles.groupCount, typography.caption, { color: colors.textSecondary }]}>
+          <Text style={[styles.groupCount, typography.caption, { color: colors.text.secondary }]}>
             {items.filter(i => i.completed).length}/{items.length}
           </Text>
         </View>
@@ -194,15 +194,15 @@ export default function PlannerScreenNew() {
                     style={[
                       styles.routineTitle,
                       typography.bodyBold,
-                      { color: colors.text },
+                      { color: colors.text.primary },
                       routine.completed && styles.routineTitleCompleted,
                     ]}
                   >
                     {routine.title}
                   </Text>
                   <View style={styles.routineMetadata}>
-                    <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-                    <Text style={[styles.routineTime, typography.caption, { color: colors.textSecondary }]}>
+                    <Ionicons name="time-outline" size={14} color={colors.text.secondary} />
+                    <Text style={[styles.routineTime, typography.caption, { color: colors.text.secondary }]}>
                       {routine.time}
                     </Text>
                     <Text style={[styles.routineType, typography.caption, { color: typeInfo.color }]}>
@@ -210,7 +210,7 @@ export default function PlannerScreenNew() {
                     </Text>
                   </View>
                   {routine.notes && (
-                    <Text style={[styles.routineNotes, typography.caption, { color: colors.textSecondary }]}>
+                    <Text style={[styles.routineNotes, typography.caption, { color: colors.text.secondary }]}>
                       {routine.notes}
                     </Text>
                   )}
@@ -233,7 +233,7 @@ export default function PlannerScreenNew() {
       {/* Header */}
       <LinearGradient
         colors={colors.gradients.blue}
-        style={[styles.header, shadows.medium]}
+        style={[styles.header, shadows.md]}
       >
         <Ionicons name="calendar" size={48} color="white" />
         <Text style={[styles.headerTitle, typography.h1, { color: 'white' }]}>
@@ -245,9 +245,9 @@ export default function PlannerScreenNew() {
       </LinearGradient>
 
       {/* Progress Card */}
-      <View style={[styles.progressCard, { backgroundColor: 'white' }, shadows.medium]}>
+      <View style={[styles.progressCard, { backgroundColor: 'white' }, shadows.md]}>
         <View style={styles.progressHeader}>
-          <Text style={[styles.progressTitle, typography.h3, { color: colors.text }]}>
+          <Text style={[styles.progressTitle, typography.h3, { color: colors.text.primary }]}>
             Bugünün İlerlemesi
           </Text>
           <TouchableOpacity onPress={() => setShowAddModal(true)}>
@@ -265,7 +265,7 @@ export default function PlannerScreenNew() {
             <Text style={[styles.progressStatValue, typography.h1, { color: colors.primary[500] }]}>
               {stats.completed}
             </Text>
-            <Text style={[styles.progressStatLabel, typography.caption, { color: colors.textSecondary }]}>
+            <Text style={[styles.progressStatLabel, typography.caption, { color: colors.text.secondary }]}>
               Tamamlandı
             </Text>
           </View>
@@ -274,7 +274,7 @@ export default function PlannerScreenNew() {
             <Text style={[styles.progressStatValue, typography.h1, { color: colors.neutral[500] }]}>
               {stats.total - stats.completed}
             </Text>
-            <Text style={[styles.progressStatLabel, typography.caption, { color: colors.textSecondary }]}>
+            <Text style={[styles.progressStatLabel, typography.caption, { color: colors.text.secondary }]}>
               Kalan
             </Text>
           </View>
@@ -283,7 +283,7 @@ export default function PlannerScreenNew() {
             <Text style={[styles.progressStatValue, typography.h1, { color: colors.success[500] }]}>
               {Math.round(stats.percentage)}%
             </Text>
-            <Text style={[styles.progressStatLabel, typography.caption, { color: colors.textSecondary }]}>
+            <Text style={[styles.progressStatLabel, typography.caption, { color: colors.text.secondary }]}>
               İlerleme
             </Text>
           </View>
@@ -334,8 +334,8 @@ export default function PlannerScreenNew() {
         onRequestClose={() => setShowAddModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: 'white' }, shadows.large]}>
-            <Text style={[styles.modalTitle, typography.h2, { color: colors.text }]}>
+          <View style={[styles.modalContent, { backgroundColor: 'white' }, shadows.lg]}>
+            <Text style={[styles.modalTitle, typography.h2, { color: colors.text.primary }]}>
               Yeni Rutin Ekle
             </Text>
 
@@ -343,7 +343,7 @@ export default function PlannerScreenNew() {
               <TextInput
                 style={[styles.input, { borderColor: colors.neutral[300], color: colors.text }]}
                 placeholder="Başlık"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={colors.text.secondary}
                 value={newRoutine.title}
                 onChangeText={(text) => setNewRoutine({ ...newRoutine, title: text })}
               />
@@ -351,7 +351,7 @@ export default function PlannerScreenNew() {
               <TextInput
                 style={[styles.input, { borderColor: colors.neutral[300], color: colors.text }]}
                 placeholder="Saat (HH:MM)"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={colors.text.secondary}
                 value={newRoutine.time}
                 onChangeText={(text) => setNewRoutine({ ...newRoutine, time: text })}
               />
@@ -400,7 +400,7 @@ export default function PlannerScreenNew() {
               <TextInput
                 style={[styles.input, styles.textArea, { borderColor: colors.neutral[300], color: colors.text }]}
                 placeholder="Notlar (opsiyonel)"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={colors.text.secondary}
                 value={newRoutine.notes}
                 onChangeText={(text) => setNewRoutine({ ...newRoutine, notes: text })}
                 multiline
@@ -413,7 +413,7 @@ export default function PlannerScreenNew() {
                 style={[styles.modalButton, { backgroundColor: colors.neutral[200] }]}
                 onPress={() => setShowAddModal(false)}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>İptal</Text>
+                <Text style={[styles.modalButtonText, { color: colors.text.primary }]}>İptal</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={handleAddRoutine}>

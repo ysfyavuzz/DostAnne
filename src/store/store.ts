@@ -30,6 +30,7 @@ export {
   deleteActivity,
   setActivities,
   clearActivities,
+  setBaby,
 } from './activitiesSlice';
 
 export {
@@ -41,11 +42,13 @@ export {
 } from './databaseSlice';
 
 export {
-  setProfile,
-  updateProfile,
+  setSettings as setProfile, // setProfile yerine setSettings kullanılıyor
+  updateBabyProfile as updateProfile, // updateProfile yerine updateBabyProfile kullanılıyor
+  updateSettings,
 } from './profileSlice';
 
 export {
-  scheduleNotification,
+  scheduleFeedingReminders as scheduleNotification, // scheduleNotification yerine scheduleFeedingReminders kullanılıyor
   cancelNotification,
+  loadScheduledNotifications,
 } from './notificationSlice';

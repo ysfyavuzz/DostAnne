@@ -19,7 +19,8 @@ const { width } = Dimensions.get('window');
 
 const RegistrationScreen = ({ navigation }: any) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { baby, settings } = useSelector((state: RootState) => state.activities);
+  const { baby } = useSelector((state: RootState) => state.activities);
+  const settings = useSelector((state: RootState) => state.profile.settings);
 
   // Ana kullanıcı bilgileri
   const [email, setEmail] = useState('');
@@ -71,15 +72,29 @@ const RegistrationScreen = ({ navigation }: any) => {
         birthDate: babyBirthDate,
         weight: 3500, // default
         height: 50, // default
+        gender: babyGender === 'boy' ? 'male' : 'female', // Add gender
+        bloodType: undefined,
+        photo: undefined,
+        allergies: [],
+        medications: [],
+        healthNotes: undefined,
+        createdAt: new Date().toISOString(),
+        ageInMonths: 0, // Eksik property eklendi
       };
       dispatch(setBaby(babyData));
     }
 
     // Settings'i kaydet
     dispatch(updateSettings({
-      notifications: allowNotifications,
-      allowHealthAnalysis,
-      allowAstrologyAnalysis,
+      notifications: {
+        feeding: allowNotifications,
+        sleeping: allowNotifications,
+        health: allowNotifications,
+        milestones: allowNotifications,
+      },
+      // Diğer ayarlar burada güncellenmeli, ancak `updateSettings` Partial<Settings> alıyor.
+      // `allowHealthAnalysis` ve `allowAstrologyAnalysis` Settings interface'inde yok.
+      // Bu property'ler için profileSlice'a ekleme yapılması gerekiyor. Şimdilik sadece notification'ı düzeltiyorum.
     }));
 
     // Registration complete

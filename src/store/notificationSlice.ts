@@ -206,7 +206,7 @@ const notificationSlice = createSlice({
         (action) => action.type.endsWith('/rejected'),
         (state, action) => {
           state.loading = false;
-          state.error = action.error.message || 'Notification operation failed';
+          state.error = action.error?.message || 'Notification operation failed';
         }
       )
       .addMatcher(

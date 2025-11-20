@@ -81,7 +81,7 @@ const SleepScreenNew = () => {
       });
       
       if (result.payload) {
-        setCurrentSessionId(result.payload.id);
+        setCurrentSessionId(result.payload?.id);
       }
     } catch (error) {
       console.error('Failed to start sleep session:', error);
@@ -169,7 +169,7 @@ const SleepScreenNew = () => {
         {/* Timer Card */}
         <View style={stylesObj.section}>
           <LinearGradient
-            colors={isActive ? colors.gradients.purple : colors.gradients.secondary}
+            colors={isActive ? colors.gradients.primary : colors.gradients.secondary}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={stylesObj.timerCard}
