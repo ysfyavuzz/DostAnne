@@ -1,5 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Logger from '../utils/Logger';
+import { InputValidator } from '../utils/InputValidator';
 
 export interface BabyProfile {
   id?: number;
@@ -89,9 +91,10 @@ class DatabaseService {
     try {
       this.db = await SQLite.openDatabaseAsync('dostanne.db');
       await this.createTables();
-      console.log('Database initialized successfully');
+      Logger.info('Database initialized successfully');
     } catch (error) {
-      console.error('Database initialization failed:', error);
+      Logger.error('Database initialization failed', error);
+      throw error;
     }
   }
 
@@ -218,16 +221,30 @@ class DatabaseService {
   async createBabyProfile(baby: Omit<BabyProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (!this.db) throw new Error('Database not initialized');
 
+    // Validate and sanitize input
+    const sanitized = InputValidator.sanitizeBabyProfile(baby);
+
     const now = new Date().toISOString();
     const result = await this.db.runAsync(
       `INSERT INTO baby_profiles (name, birthDate, gender, weight, height, bloodType, photo, createdAt, updatedAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [baby.name, baby.birthDate, baby.gender, baby.weight, baby.height, baby.bloodType ?? null, baby.photo ?? null, now, now]
+      [
+        sanitized.name,
+        sanitized.birthDate,
+        sanitized.gender,
+        sanitized.weight,
+        sanitized.height,
+        sanitized.bloodType ?? null,
+        sanitized.photo ?? null,
+        now,
+        now,
+      ]
     );
 
     if (result.changes > 0) {
       // Store current baby ID in AsyncStorage
       await AsyncStorage.setItem('currentBabyId', result.lastInsertRowId.toString());
+      Logger.info('Baby profile created successfully', { id: result.lastInsertRowId });
       return result.lastInsertRowId;
     }
     throw new Error('Failed to create baby profile');
@@ -258,16 +275,35 @@ class DatabaseService {
   async updateBabyProfile(id: number, updates: Partial<BabyProfile>): Promise<boolean> {
     if (!this.db) throw new Error('Database not initialized');
 
-    const updatedAt = new Date().toISOString();
-    const fields = Object.keys(updates).filter(key => key !== 'id').join(', ');
-    const values = Object.values(updates).filter((_, index) => index < Object.keys(updates).length - 2);
+    // Validate ID
+    InputValidator.validateId(id);
 
-    if (fields.length === 0) return false;
+    // Validate and sanitize updates
+    const sanitized = InputValidator.sanitizeBabyProfile(updates);
+
+    if (Object.keys(sanitized).length === 0) {
+      Logger.warn('No valid fields to update');
+      return false;
+    }
+
+    // Build parameterized query with whitelisted fields only
+    const updatedAt = new Date().toISOString();
+    const setClauses = Object.keys(sanitized).map((key) => {
+      // Additional safety check - validate field names against whitelist
+      InputValidator.sanitizeFieldName(key, InputValidator.ALLOWED_BABY_FIELDS);
+      return `${key} = ?`;
+    });
+
+    const values = [...Object.values(sanitized), updatedAt, id] as (string | number | null)[];
 
     const result = await this.db.runAsync(
-      `UPDATE baby_profiles SET ${fields}, updatedAt = ? WHERE id = ?`,
-      [...values, updatedAt, id]
+      `UPDATE baby_profiles SET ${setClauses.join(', ')}, updatedAt = ? WHERE id = ?`,
+      values
     );
+
+    if (result.changes > 0) {
+      Logger.info('Baby profile updated successfully', { id });
+    }
 
     return result.changes > 0;
   }
@@ -276,14 +312,26 @@ class DatabaseService {
   async createActivity(activity: Omit<ActivityRecord, 'id' | 'createdAt'>): Promise<number> {
     if (!this.db) throw new Error('Database not initialized');
 
+    // Validate and sanitize input
+    const sanitized = InputValidator.sanitizeActivity(activity);
+
     const now = new Date().toISOString();
     const result = await this.db.runAsync(
       `INSERT INTO activity_records (type, startTime, endTime, duration, notes, babyId, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [activity.type, activity.startTime, activity.endTime ?? null, activity.duration ?? null, activity.notes ?? null, activity.babyId, now]
+      [
+        sanitized.type,
+        sanitized.startTime,
+        sanitized.endTime ?? null,
+        sanitized.duration ?? null,
+        sanitized.notes ?? null,
+        sanitized.babyId,
+        now,
+      ]
     );
 
     if (result.changes > 0) {
+      Logger.info('Activity created successfully', { id: result.lastInsertRowId });
       return result.lastInsertRowId;
     }
     throw new Error('Failed to create activity record');
