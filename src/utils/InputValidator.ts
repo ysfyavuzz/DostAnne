@@ -45,22 +45,41 @@ export class InputValidator {
   /**
    * Sanitize string input to prevent XSS and other attacks
    * Removes potentially dangerous characters and limits length
+   * Note: For baby names, this provides basic protection.
+   * For HTML rendering contexts, use proper HTML encoding libraries.
    */
   static sanitizeString(input: string, maxLength: number = 255): string {
     if (typeof input !== 'string') {
       throw new Error('Input must be a string');
     }
 
-    return (
-      input
-        .trim()
-        // Remove HTML/script tags
-        .replace(/<[^>]*>/g, '')
-        // Remove potentially dangerous characters
-        .replace(/[<>"']/g, '')
-        // Limit length
-        .substring(0, maxLength)
-    );
+    let sanitized = input.trim();
+
+    // Step 1: Remove dangerous characters first to break any potential tags
+    // This prevents incomplete sanitization warnings from CodeQL
+    sanitized = sanitized.replace(/[<>"'`]/g, '');
+
+    // Step 2: Remove dangerous URL schemes
+    const dangerousSchemes = [
+      'javascript:',
+      'data:',
+      'vbscript:',
+      'file:',
+      'about:',
+    ];
+    dangerousSchemes.forEach((scheme) => {
+      const regex = new RegExp(scheme, 'gi');
+      sanitized = sanitized.replace(regex, '');
+    });
+
+    // Step 3: Remove HTML event handlers
+    sanitized = sanitized.replace(/\bon\w+\s*=/gi, '');
+
+    // Step 4: Remove script-related keywords
+    sanitized = sanitized.replace(/script/gi, '');
+
+    // Step 5: Limit length
+    return sanitized.substring(0, maxLength);
   }
 
   /**

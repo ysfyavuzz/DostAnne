@@ -25,13 +25,16 @@ describe('DatabaseService Security Tests', () => {
   });
 
   describe('InputValidator - XSS Prevention', () => {
-    it('should remove HTML tags from string input', () => {
+    it('should remove HTML tags and script content from string input', () => {
       const malicious = "<script>alert('xss')</script>Ahmet";
       const sanitized = InputValidator.sanitizeString(malicious);
-      expect(sanitized).not.toContain('<script>');
-      expect(sanitized).not.toContain('</script>');
-      // After removing <>, ", ', the result is: alert(xss)Ahmet
-      expect(sanitized).toBe("alert(xss)Ahmet");
+      expect(sanitized).not.toContain('<');
+      expect(sanitized).not.toContain('>');
+      expect(sanitized).not.toContain('script');
+      expect(sanitized).not.toContain("'");
+      // After sanitization: <>"' removed first (breaking tags), then script keyword removed
+      // Result: scriptalert(xss)/scriptAhmet -> alert(xss)/Ahmet
+      expect(sanitized).toBe('alert(xss)/Ahmet');
     });
 
     it('should remove dangerous characters from string', () => {
