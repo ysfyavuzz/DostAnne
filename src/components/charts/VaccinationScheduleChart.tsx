@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -59,12 +59,12 @@ export default function VaccinationScheduleChart({
     }).start();
   }, []);
 
-  const getFilteredVaccinations = () => {
+  const filteredVaccinations = useMemo(() => {
     if (filterStatus === 'all') return vaccinations;
     return vaccinations.filter(v => v.status === filterStatus);
-  };
+  }, [vaccinations, filterStatus]);
 
-  const getVaccinationTimelineData = () => {
+  const vaccinationTimelineData = useMemo(() => {
     const sortedVaccines = [...vaccinations].sort((a, b) => 
       new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
     );
@@ -106,32 +106,31 @@ export default function VaccinationScheduleChart({
       ],
       legend: ['Tamamlandı', 'Bekliyor', 'Gecikmiş'],
     };
-  };
+  }, [vaccinations]);
 
-  const getVaccinationStats = () => {
+  const vaccinationStats = useMemo(() => {
     const completed = vaccinations.filter(v => v.status === 'completed').length;
     const pending = vaccinations.filter(v => v.status === 'pending').length;
     const overdue = vaccinations.filter(v => v.status === 'overdue').length;
     const upcoming = vaccinations.filter(v => v.status === 'upcoming').length;
     const total = vaccinations.length;
-    const completionRate = Math.round((completed / total) * 100);
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     return { completed, pending, overdue, upcoming, total, completionRate };
-  };
+  }, [vaccinations]);
 
-  const getUpcomingVaccines = () => {
-    const today = new Date();
+  const upcomingVaccines = useMemo(() => {
     return vaccinations
       .filter(v => v.status === 'pending' || v.status === 'upcoming')
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
       .slice(0, 3);
-  };
+  }, [vaccinations]);
 
-  const getOverdueVaccines = () => {
+  const overdueVaccines = useMemo(() => {
     return vaccinations
       .filter(v => v.status === 'overdue')
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-  };
+  }, [vaccinations]);
 
   const handleVaccinationComplete = () => {
     if (selectedVaccine) {
@@ -193,11 +192,9 @@ export default function VaccinationScheduleChart({
     }
   };
 
-  const filteredVaccinations = getFilteredVaccinations();
-  const timelineData = getVaccinationTimelineData();
-  const stats = getVaccinationStats();
-  const upcomingVaccines = getUpcomingVaccines();
-  const overdueVaccines = getOverdueVaccines();
+  // Already memoized above, use them directly as stats, upcomingVaccines, overdueVaccines
+  const stats = vaccinationStats;
+  const timelineData = vaccinationTimelineData;
 
   const chartConfig = {
     backgroundColor: colors.card,

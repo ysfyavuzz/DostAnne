@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -130,9 +130,11 @@ export default function ExploreScreenNew() {
   const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const filteredArticles = selectedCategory === 'all'
-    ? articles
-    : articles.filter(a => a.category === selectedCategory);
+  const filteredArticles = useMemo(() => {
+    return selectedCategory === 'all'
+      ? articles
+      : articles.filter(a => a.category === selectedCategory);
+  }, [selectedCategory]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>

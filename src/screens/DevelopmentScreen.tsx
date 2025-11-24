@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -40,7 +40,7 @@ interface AnimatedCategorySectionProps {
   itemPrefix?: string;
 }
 
-const AnimatedCategorySection: React.FC<AnimatedCategorySectionProps> = ({
+const AnimatedCategorySection: React.FC<AnimatedCategorySectionProps> = React.memo(({
   sectionKey,
   icon,
   iconColor,
@@ -163,7 +163,7 @@ const AnimatedCategorySection: React.FC<AnimatedCategorySectionProps> = ({
       )}
     </TouchableOpacity>
   );
-};
+});
 
 // Animated Progress Card Component
 interface AnimatedProgressCardProps {
@@ -174,7 +174,7 @@ interface AnimatedProgressCardProps {
   shadows: any;
 }
 
-const AnimatedProgressCard: React.FC<AnimatedProgressCardProps> = ({
+const AnimatedProgressCard: React.FC<AnimatedProgressCardProps> = React.memo(({
   completed,
   total,
   colors,
@@ -259,7 +259,7 @@ const AnimatedProgressCard: React.FC<AnimatedProgressCardProps> = ({
       )}
     </View>
   );
-};
+});
 
 interface Milestone {
   id: string;
@@ -430,9 +430,9 @@ export default function DevelopmentScreenNew() {
   }, [growthRecords]);
 
   // Handle milestone toggle
-  const toggleMilestone = (id: string) => {
-    setMilestones(
-      milestones.map((m) =>
+  const toggleMilestone = useCallback((id: string) => {
+    setMilestones((prevMilestones) =>
+      prevMilestones.map((m) =>
         m.id === id
           ? {
               ...m,
@@ -442,7 +442,7 @@ export default function DevelopmentScreenNew() {
           : m
       )
     );
-  };
+  }, []);
 
   // Handle add growth record
   const handleAddGrowth = () => {
@@ -480,12 +480,21 @@ export default function DevelopmentScreenNew() {
     }
   };
 
-  // Render simple growth chart (mock visualization)
-  const renderGrowthChart = () => {
+  // Memoize chart calculations
+  const chartData = useMemo(() => {
     if (growthRecords.length === 0) return null;
 
     const maxWeight = Math.max(...growthRecords.map((r) => r.weight));
     const maxHeight = Math.max(...growthRecords.map((r) => r.height));
+    
+    return { maxWeight, maxHeight };
+  }, [growthRecords]);
+
+  // Render simple growth chart (mock visualization)
+  const renderGrowthChart = () => {
+    if (!chartData) return null;
+
+    const { maxWeight, maxHeight } = chartData;
 
     return (
       <View style={styles.chartContainer}>
