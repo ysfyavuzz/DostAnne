@@ -381,34 +381,41 @@ export class AIRecommendationService {
     return recommendations;
   }
 
+  // Memoized helper functions with cached results
+  private static readonly PRIORITY_COLORS: Record<string, string> = {
+    high: '#FF6B6B',
+    medium: '#FFA500',
+    low: '#4ECDC4',
+    default: '#ccc',
+  };
+
+  private static readonly CATEGORY_ICONS: Record<string, string> = {
+    feeding: '🍼',
+    sleep: '😴',
+    health: '🏥',
+    development: '🧠',
+    safety: '🛡️',
+    default: '📋',
+  };
+
+  private static readonly CATEGORY_LABELS: Record<string, string> = {
+    feeding: 'Beslenme',
+    sleep: 'Uyku',
+    health: 'Sağlık',
+    development: 'Gelişim',
+    safety: 'Güvenlik',
+    default: 'Genel',
+  };
+
   static getPriorityColor(priority: 'low' | 'medium' | 'high'): string {
-    switch (priority) {
-      case 'high': return '#FF6B6B';
-      case 'medium': return '#FFA500';
-      case 'low': return '#4ECDC4';
-      default: return '#ccc';
-    }
+    return this.PRIORITY_COLORS[priority] || this.PRIORITY_COLORS.default;
   }
 
   static getCategoryIcon(category: string): string {
-    switch (category) {
-      case 'feeding': return '🍼';
-      case 'sleep': return '😴';
-      case 'health': return '🏥';
-      case 'development': return '🧠';
-      case 'safety': return '🛡️';
-      default: return '📋';
-    }
+    return this.CATEGORY_ICONS[category] || this.CATEGORY_ICONS.default;
   }
 
   static getCategoryLabel(category: string): string {
-    switch (category) {
-      case 'feeding': return 'Beslenme';
-      case 'sleep': return 'Uyku';
-      case 'health': return 'Sağlık';
-      case 'development': return 'Gelişim';
-      case 'safety': return 'Güvenlik';
-      default: return 'Genel';
-    }
+    return this.CATEGORY_LABELS[category] || this.CATEGORY_LABELS.default;
   }
 }
