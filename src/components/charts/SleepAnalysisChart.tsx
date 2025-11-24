@@ -26,7 +26,7 @@ interface SleepAnalysisChartProps {
   onPeriodChange?: (period: string) => void;
 }
 
-export const SleepAnalysisChart: React.FC<SleepAnalysisChartProps> = ({
+export const SleepAnalysisChart: React.FC<SleepAnalysisChartProps> = React.memo(({
   period = '7',
   onPeriodChange,
 }) => {
@@ -370,7 +370,7 @@ export const SleepAnalysisChart: React.FC<SleepAnalysisChartProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

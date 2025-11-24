@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -44,12 +44,12 @@ interface HealthMetricsDashboardProps {
   onMetricChange: (metric: 'temperature' | 'weight' | 'height' | 'score') => void;
 }
 
-export default function HealthMetricsDashboard({
+const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = React.memo(({
   healthData,
   vaccinations,
   selectedMetric,
   onMetricChange,
-}: HealthMetricsDashboardProps) {
+}) => {
   const { colors } = useTheme();
   const [animatedValue] = useState(new Animated.Value(0));
 
@@ -61,7 +61,7 @@ export default function HealthMetricsDashboard({
     }).start();
   }, []);
 
-  const getHealthMetricData = () => {
+  const healthMetricData = useMemo(() => {
     let data = [];
     let label = '';
     let color = '';
@@ -110,18 +110,18 @@ export default function HealthMetricsDashboard({
       unit,
       color,
     };
-  };
+  }, [healthData, selectedMetric]);
 
-  const getVaccinationStats = () => {
+  const vaccinationStats = useMemo(() => {
     const completed = vaccinations.filter(v => v.status === 'completed').length;
     const pending = vaccinations.filter(v => v.status === 'pending').length;
     const overdue = vaccinations.filter(v => v.status === 'overdue').length;
     const total = vaccinations.length;
 
     return { completed, pending, overdue, total };
-  };
+  }, [vaccinations]);
 
-  const getHealthScoreDistribution = () => ({
+  const healthScoreDistribution = useMemo(() => ({
     labels: ['Sıcaklık', 'Kilo', 'Boy', 'Genel'],
     data: [
       healthData.length > 0 ? (healthData[healthData.length - 1].temperature - 35) / 2 : 0.5,
@@ -129,18 +129,18 @@ export default function HealthMetricsDashboard({
       healthData.length > 0 ? (healthData[healthData.length - 1].height / 100) : 0.5,
       healthData.length > 0 ? healthData[healthData.length - 1].healthScore / 100 : 0.5,
     ],
-  });
+  }), [healthData]);
 
-  const getCriticalVaccinations = () => {
+  const criticalVaccinations = useMemo(() => {
     return vaccinations
       .filter(v => v.importance === 'critical' && v.status !== 'completed')
       .slice(0, 3);
-  };
+  }, [vaccinations]);
 
-  const metricData = getHealthMetricData();
-  const vaccinationStats = getVaccinationStats();
-  const criticalVaccines = getCriticalVaccinations();
-  const healthScoreData = getHealthScoreDistribution();
+  const metricData = healthMetricData;
+  const stats = vaccinationStats;
+  const criticalVaccines = criticalVaccinations;
+  const healthScoreData = healthScoreDistribution;
 
   const chartConfig = {
     backgroundColor: colors.card,
@@ -389,7 +389,9 @@ export default function HealthMetricsDashboard({
       </View>
     </ScrollView>
   );
-}
+});
+
+export default HealthMetricsDashboard;
 
 const styles = StyleSheet.create({
   container: {

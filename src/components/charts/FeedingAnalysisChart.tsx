@@ -301,7 +301,9 @@ const FeedingAnalysisChart: React.FC<FeedingAnalysisChartProps> = React.memo(({
       </View>
     </ScrollView>
   );
-}
+});
+
+export default FeedingAnalysisChart;
 
 const styles = StyleSheet.create({
   container: {

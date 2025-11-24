@@ -27,7 +27,7 @@ interface GrowthChartComponentProps {
   babyData?: GrowthDataPoint[];
 }
 
-export const GrowthChartComponent: React.FC<GrowthChartComponentProps> = ({
+export const GrowthChartComponent: React.FC<GrowthChartComponentProps> = React.memo(({
   title,
   type,
   babyData,
@@ -270,7 +270,7 @@ export const GrowthChartComponent: React.FC<GrowthChartComponentProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
