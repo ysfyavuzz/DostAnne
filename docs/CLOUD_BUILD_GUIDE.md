@@ -246,9 +246,10 @@ gcloud builds list --filter="status=FAILURE"
 
 ## 💰 Maliyet Optimizasyonu
 
-### Free Tier Limitleri (Şubat 2024)
+### Free Tier Limitleri (Güncel Fiyatlandırma)
 - İlk 120 build-dakika/gün ücretsiz
 - Sonrası: $0.003/build-dakika
+- Not: Güncel fiyatlandırma için Google Cloud fiyatlandırma sayfasını kontrol edin
 
 ### Optimizasyon İpuçları
 1. `.gcloudignore` kullanarak upload süresini azaltın
