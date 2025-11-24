@@ -261,6 +261,8 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
                 data={'labels' in chartData ? chartData : { labels: [], datasets: [] }}
                 width={Math.max(screenWidth, data.length * 70)}
                 height={chartHeight}
+                yAxisLabel=""
+                yAxisSuffix=""
                 chartConfig={{
                   backgroundColor: '#ffffff',
                   backgroundGradientFrom: '#ffffff',
@@ -307,19 +309,26 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
         </ScrollView>
       )}
 
-      {type !== 'summary' && 'legends' in chartData && chartData.legends && Array.isArray(chartData.legends) && (
+      {type !== 'summary' && 'legends' in chartData && chartData.legends && Array.isArray(chartData.legends) ? (
         <View style={styles.legendContainer}>
-          {chartData.legends.map((legend: string, index: number) => (
-            <View key={index} style={styles.legendItem}>
-              <View style={[
-                styles.legendColor,
-                { backgroundColor: 'datasets' in chartData && Array.isArray(chartData.datasets) && chartData.datasets[index]?.color(1) || '#007AFF' }
-              ]} />
-              <Text style={styles.legendText}>{legend}</Text>
-            </View>
-          ))}
+          {chartData.legends.map((legend: string, index: number) => {
+            const dataset = 'datasets' in chartData && Array.isArray(chartData.datasets) ? chartData.datasets[index] : null;
+            const colorFunc = dataset?.color;
+            const color = colorFunc && typeof colorFunc === 'function' 
+              ? colorFunc(1) 
+              : '#007AFF';
+            return (
+              <View key={index} style={styles.legendItem}>
+                <View style={[
+                  styles.legendColor,
+                  { backgroundColor: color as string }
+                ]} />
+                <Text style={styles.legendText}>{legend}</Text>
+              </View>
+            );
+          })}
         </View>
-      )}
+      ) : null}
 
       <View style={styles.insightContainer}>
         <Text style={styles.insightTitle}>📊 Aktivite Analizi</Text>

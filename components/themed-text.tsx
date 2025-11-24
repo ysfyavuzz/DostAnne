@@ -1,6 +1,8 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemedStyles } from '@/src/hooks/useThemedStyles';
+import { Typography } from '@/src/constants/Typography';
+import type { Theme } from '@/src/hooks/useTheme';
 
 export type ThemedTextProps = TextProps & {
   type?: keyof typeof Typography; // Typography sabitlerini kullan

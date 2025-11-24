@@ -94,14 +94,14 @@ class NotificationService {
       }
 
       const trigger = notification.recurring
-        ? {
-            type: 'daily', // Expo Notifications'da 'daily' stringi kullanılıyor
+        ? ({
             hour: notification.scheduledTime.getHours(),
             minute: notification.scheduledTime.getMinutes(),
-          }
-        : {
+            repeats: true,
+          } as unknown as Notifications.DailyTriggerInput)
+        : ({
             date: notification.scheduledTime,
-          };
+          } as Notifications.DateTriggerInput);
 
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {

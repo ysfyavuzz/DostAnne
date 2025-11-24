@@ -15,5 +15,6 @@ export function useThemeColor(
   
   // Bu fonksiyonun işlevi artık useThemedStyles içinde yapılıyor.
   // Geriye dönük uyumluluk için geçici bir çözüm.
-  return colors.text.primary; 
+  // colors is a flat object with string values, access the string value directly
+  return typeof colors.primary === 'string' ? colors.primary : colors.text; 
 }

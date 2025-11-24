@@ -212,9 +212,11 @@ const SleepChart: React.FC<SleepChartProps> = ({
           <View style={styles.chartContainer}>
             {type === 'daily' || type === 'pattern' ? (
               <BarChart
-                data={chartData}
+                data={'labels' in chartData ? chartData : { labels: [], datasets: [] }}
                 width={Math.max(screenWidth, data.length * 70)}
                 height={chartHeight}
+                yAxisLabel=""
+                yAxisSuffix=""
                 chartConfig={{
                   backgroundColor: '#ffffff',
                   backgroundGradientFrom: '#ffffff',
