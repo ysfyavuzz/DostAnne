@@ -1,0 +1,53 @@
+# Node modules - will be installed during build
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Expo
+.expo/
+
+# Testing
+coverage/
+__tests__/
+*.test.ts
+*.test.tsx
+*.lcov
+
+# Documentation
+docs/
+*.md
+CHANGELOG.md
+README.md
+
+# Build artifacts
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.prettierrc
