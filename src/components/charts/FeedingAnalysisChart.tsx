@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -39,15 +39,15 @@ interface FeedingAnalysisChartProps {
   onPeriodChange: (period: '7' | '30' | '90') => void;
 }
 
-export default function FeedingAnalysisChart({
+const FeedingAnalysisChart: React.FC<FeedingAnalysisChartProps> = React.memo(({
   data,
   timeDistribution,
   selectedPeriod,
   onPeriodChange,
-}: FeedingAnalysisChartProps) {
+}) => {
   const { colors } = useTheme();
 
-  const getDailyFeedingData = () => ({
+  const dailyFeedingData = useMemo(() => ({
     labels: data.map(item => {
       const date = new Date(item.date);
       return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
@@ -70,9 +70,9 @@ export default function FeedingAnalysisChart({
       },
     ],
     legend: ['Anne Sütü', 'Mama', 'Ek Gıda'],
-  });
+  }), [data]);
 
-  const getTotalFeedingData = () => ({
+  const totalFeedingData = useMemo(() => ({
     labels: data.map(item => {
       const date = new Date(item.date);
       return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
@@ -84,9 +84,9 @@ export default function FeedingAnalysisChart({
         strokeWidth: 3,
       },
     ],
-  });
+  }), [data]);
 
-  const getFeedingTypeDistribution = () => {
+  const feedingTypeDistribution = useMemo(() => {
     const totals = data.reduce(
       (acc, item) => ({
         breast: acc.breast + item.breast,
@@ -119,9 +119,9 @@ export default function FeedingAnalysisChart({
         legendFontSize: 12,
       },
     ];
-  };
+  }, [data, colors.text]);
 
-  const getTimeDistributionData = () => ({
+  const timeDistributionData = useMemo(() => ({
     labels: timeDistribution.map(item => item.time),
     datasets: [
       {
@@ -129,7 +129,7 @@ export default function FeedingAnalysisChart({
         color: (opacity = 1) => `rgba(255, 107, 157, ${opacity})`,
       },
     ],
-  });
+  }), [timeDistribution]);
 
   const chartConfig = {
     backgroundColor: colors.card,
@@ -209,7 +209,7 @@ export default function FeedingAnalysisChart({
       <View style={[styles.chartContainer, { backgroundColor: colors.card }]}>
         <ThemedText style={styles.chartTitle}>Günlük Beslenme Dağılımı</ThemedText>
         <LineChart
-          data={getDailyFeedingData()}
+          data={dailyFeedingData}
           width={screenWidth - 40}
           height={220}
           chartConfig={chartConfig}
@@ -226,7 +226,7 @@ export default function FeedingAnalysisChart({
       <View style={[styles.chartContainer, { backgroundColor: colors.card }]}>
         <ThemedText style={styles.chartTitle}>Toplam Beslenme Miktarı</ThemedText>
         <LineChart
-          data={getTotalFeedingData()}
+          data={totalFeedingData}
           width={screenWidth - 40}
           height={200}
           chartConfig={chartConfig}
@@ -239,7 +239,7 @@ export default function FeedingAnalysisChart({
       <View style={[styles.chartContainer, { backgroundColor: colors.card }]}>
         <ThemedText style={styles.chartTitle}>Beslenme Türü Dağılımı</ThemedText>
         <PieChart
-          data={getFeedingTypeDistribution()}
+          data={feedingTypeDistribution}
           width={screenWidth - 40}
           height={220}
           chartConfig={{
@@ -258,7 +258,7 @@ export default function FeedingAnalysisChart({
       <View style={[styles.chartContainer, { backgroundColor: colors.card }]}>
         <ThemedText style={styles.chartTitle}>Saatlere Göre Beslenme Dağılımı</ThemedText>
         <BarChart
-          data={getTimeDistributionData()}
+          data={timeDistributionData}
           width={screenWidth - 40}
           height={200}
           yAxisLabel=""
