@@ -10,7 +10,8 @@ import { useMemo } from 'react';
 import { useTheme } from './useTheme'; // Yeni useTheme hook'unu import et
 
 export const useThemedStyles = () => {
-  const { colors: themeColors, isDark, colorScheme } = useTheme(); // useTheme'dan dinamik renkleri al
+  const { colors: themeColors, isDark, theme } = useTheme(); // useTheme'dan dinamik renkleri al
+  const systemColorScheme = useColorScheme();
 
   // useTheme'dan gelen dinamik renkleri ve statik sabitleri birleştir
   const colors = useMemo(() => ({
@@ -26,7 +27,7 @@ export const useThemedStyles = () => {
     borderRadius: BorderRadius,
     shadows: Shadows,
     isDark,
-    colorScheme,
+    colorScheme: (theme.type === 'auto' ? systemColorScheme : theme.type) as ColorScheme,
   };
 };
 
