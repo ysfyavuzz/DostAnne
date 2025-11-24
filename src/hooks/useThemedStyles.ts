@@ -14,11 +14,35 @@ export const useThemedStyles = () => {
   const systemColorScheme = useColorScheme();
 
   // useTheme'dan gelen dinamik renkleri ve statik sabitleri birleştir
-  const colors = useMemo(() => ({
-    ...Colors, // Statik renk paletini de ekle
-    ...DarkColors, // Dark renk paletini de ekle
-    ...themeColors, // Theme colors should override to get flat text, background, etc.
-  }), [themeColors]);
+  const colors = useMemo(() => {
+    const baseColors = isDark ? DarkColors : Colors;
+    return {
+      ...baseColors, // Full color palette with nested structures
+      // Override specific flat properties from theme
+      primary: themeColors.primary,
+      secondary: themeColors.secondary,
+      background: themeColors.background,
+      card: themeColors.card,
+      text: themeColors.text, // Flat text property
+      textSecondary: themeColors.textSecondary,
+      border: themeColors.border,
+      success: themeColors.success,
+      warning: themeColors.warning,
+      error: themeColors.error,
+      info: themeColors.info,
+      tabBar: themeColors.tabBar,
+      tabBarActive: themeColors.tabBarActive,
+      header: themeColors.header,
+      // Manually add nested text object for components that use it
+      text: {
+        primary: themeColors.text,
+        secondary: themeColors.textSecondary,
+        tertiary: baseColors.text.tertiary,
+        inverse: baseColors.text.inverse,
+        disabled: baseColors.text.disabled,
+      } as any, // Type assertion to allow both string and object access
+    };
+  }, [themeColors, isDark]);
 
   return {
     colors,
