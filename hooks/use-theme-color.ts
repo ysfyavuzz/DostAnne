@@ -15,6 +15,13 @@ export function useThemeColor(
   
   // Bu fonksiyonun işlevi artık useThemedStyles içinde yapılıyor.
   // Geriye dönük uyumluluk için geçici bir çözüm.
-  // colors is a flat object with string values, access the string value directly
-  return typeof colors.primary === 'string' ? colors.primary : colors.text; 
+  // Ensure we always return a string color value
+  if (typeof colors.primary === 'string') {
+    return colors.primary;
+  }
+  if (typeof colors.text === 'string') {
+    return colors.text;
+  }
+  // Ultimate fallback to a safe color
+  return '#000000';
 }

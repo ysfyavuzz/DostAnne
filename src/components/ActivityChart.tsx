@@ -321,7 +321,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
               <View key={index} style={styles.legendItem}>
                 <View style={[
                   styles.legendColor,
-                  { backgroundColor: color as string }
+                  { backgroundColor: color }
                 ]} />
                 <Text style={styles.legendText}>{legend}</Text>
               </View>

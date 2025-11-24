@@ -324,12 +324,15 @@ export default function FeedingScreenNew() {
         babyId: currentBaby.id,
         type: feedingType,
         startTime: new Date().toISOString(),
+        // NOTE: Database schema doesn't have a 'side' field for FeedingSession
+        // Storing in notes as workaround. Consider adding 'side' column in future schema migration
         notes: feedingType === 'breast' && activeSide ? `Side: ${activeSide}` : undefined,
         amount: 0,
       });
 
       // Extract the session id from the payload
-      const payload = result.payload as any;
+      // Type guard: payload should have an id property
+      const payload = result.payload as { id?: number };
       const newSessionId = payload?.id ? String(payload.id) : null;
       setSessionId(newSessionId);
       setIsActive(true);
