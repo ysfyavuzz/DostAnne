@@ -194,7 +194,7 @@ const SleepChart: React.FC<SleepChartProps> = ({
       {type === 'quality' ? (
         <View style={styles.pieChartContainer}>
           <PieChart
-            data={chartData.data}
+            data={'data' in chartData ? chartData.data : []}
             width={screenWidth}
             height={chartHeight}
             chartConfig={{
