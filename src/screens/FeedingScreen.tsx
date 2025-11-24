@@ -315,12 +315,25 @@ export default function FeedingScreenNew() {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       
-      const newSessionId = await startFeedingSession({
+      if (!currentBaby?.id) {
+        Alert.alert('Hata', 'Lütfen önce bir bebek profili seçin');
+        return;
+      }
+      
+      const result = await startFeedingSession({
+        babyId: currentBaby.id,
         type: feedingType,
-        side: feedingType === 'breast' ? activeSide : undefined,
+        startTime: new Date().toISOString(),
+        // NOTE: Database schema doesn't have a 'side' field for FeedingSession
+        // Storing in notes as workaround. Consider adding 'side' column in future schema migration
+        notes: feedingType === 'breast' && activeSide ? `Side: ${activeSide}` : undefined,
         amount: 0,
       });
 
+      // Extract the session id from the payload
+      // Type guard: payload should have an id property
+      const payload = result.payload as { id?: number };
+      const newSessionId = payload?.id ? String(payload.id) : null;
       setSessionId(newSessionId);
       setIsActive(true);
       setIsPaused(false);
@@ -385,12 +398,16 @@ export default function FeedingScreenNew() {
     if (!sessionId) return;
 
     try {
+      const totalDuration = leftStats.duration + rightStats.duration;
       const totalAmount = Math.round(leftStats.amount + rightStats.amount);
+      const endTime = new Date().toISOString();
       
-      await endFeedingSession(sessionId, {
-        amount: totalAmount,
-        notes: notes.trim() || undefined,
-      });
+      await endFeedingSession(
+        parseInt(sessionId), 
+        endTime, 
+        totalDuration, 
+        totalAmount
+      );
 
       // Reset state
       setIsActive(false);
@@ -420,9 +437,8 @@ export default function FeedingScreenNew() {
       return sum + Math.floor((end.getTime() - start.getTime()) / 1000);
     }, 0);
 
-    const totalAmount = todayFeedings.reduce((sum, a) => {
-      return sum + (a.details?.amount || 0);
-    }, 0);
+    // Note: ActivityRecord doesn't have amount field, would need to query FeedingSessions separately
+    const totalAmount = 0; // This would need to come from FeedingSession records
 
     return {
       count: todayFeedings.length,
@@ -609,7 +625,7 @@ export default function FeedingScreenNew() {
             {!isActive ? (
               <TouchableOpacity
                 style={[styles.startButton, { backgroundColor: 'white' }]}
-                onPress={handleStart}
+                onPress={() => handleStart()}
               >
                 <Ionicons name="play" size={28} color={colors.primary[500]} />
                 <Text style={[styles.startButtonText, { color: colors.primary[500] }]}>

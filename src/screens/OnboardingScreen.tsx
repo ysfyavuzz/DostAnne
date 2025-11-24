@@ -33,7 +33,7 @@ const OnboardingScreen: React.FC = () => {
     scheduleFeeding, 
     scheduleSleep, 
     permissionGranted, 
-    requestNotificationPermissions 
+    initializeNotifications 
   } = useNotifications();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -126,12 +126,10 @@ const OnboardingScreen: React.FC = () => {
               await scheduleFeeding(babyData.name, 3);
               await scheduleSleep(babyData.name);
             } else {
-              // Request permissions first, then schedule
-              const granted = await requestNotificationPermissions();
-              if (granted) {
-                await scheduleFeeding(babyData.name, 3);
-                await scheduleSleep(babyData.name);
-              }
+              // Initialize notifications to request permissions, then schedule
+              await initializeNotifications();
+              await scheduleFeeding(babyData.name, 3);
+              await scheduleSleep(babyData.name);
             }
           } catch (error) {
             console.error('Failed to schedule notifications:', error);

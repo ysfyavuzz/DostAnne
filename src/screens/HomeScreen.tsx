@@ -213,7 +213,7 @@ const HomeScreenNew = () => {
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={action.gradient}
+                colors={action.gradient as unknown as readonly [string, string, ...string[]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.quickActionGradient}

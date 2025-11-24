@@ -15,5 +15,13 @@ export function useThemeColor(
   
   // Bu fonksiyonun işlevi artık useThemedStyles içinde yapılıyor.
   // Geriye dönük uyumluluk için geçici bir çözüm.
-  return colors.text.primary; 
+  // Ensure we always return a string color value
+  if (typeof colors.primary === 'string') {
+    return colors.primary;
+  }
+  if (typeof colors.text === 'string') {
+    return colors.text;
+  }
+  // Ultimate fallback to a safe color
+  return '#000000';
 }
