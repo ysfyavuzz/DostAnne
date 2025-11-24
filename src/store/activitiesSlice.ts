@@ -94,7 +94,7 @@ export const selectLoading = (state: { activities: ActivitiesState }) => state.a
 export const selectError = (state: { activities: ActivitiesState }) => state.activities.error;
 export const selectCurrentActivity = (state: { activities: ActivitiesState }) => state.activities.currentActivity;
 
-// Async thunks için
+// Async thunks using consistent error handling
 export const loadActivitiesForBaby = (babyId: string) => {
   return async (dispatch: any) => {
     dispatch(setLoading(true));
@@ -102,7 +102,7 @@ export const loadActivitiesForBaby = (babyId: string) => {
       // Burada veritabanı işlemleri yapılacak
       dispatch(setError(null));
     } catch (error) {
-      dispatch(setError(error as string));
+      dispatch(setError((error as Error).message || 'Failed to load activities'));
     } finally {
       dispatch(setLoading(false));
     }
@@ -117,7 +117,7 @@ export const saveActivity = (activity: Activity) => {
       dispatch(addActivity(activity));
       dispatch(setError(null));
     } catch (error) {
-      dispatch(setError(error as string));
+      dispatch(setError((error as Error).message || 'Failed to save activity'));
     } finally {
       dispatch(setLoading(false));
     }

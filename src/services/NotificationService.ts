@@ -126,6 +126,18 @@ class NotificationService {
     }
   }
 
+  // Helper method to schedule a notification if scheduled time is in future
+  private async scheduleIfFuture(
+    notification: ScheduledNotification,
+    scheduledTime: Date,
+    now: Date
+  ): Promise<string | null> {
+    if (scheduledTime > now) {
+      return await this.scheduleNotification(notification);
+    }
+    return null;
+  }
+
   async scheduleFeedingReminders(babyName: string, intervalHours: number): Promise<string[]> {
     const settings = await this.getNotificationSettings();
     if (!settings.feedingReminders) return [];
@@ -138,19 +150,17 @@ class NotificationService {
       const scheduledTime = new Date(now);
       scheduledTime.setHours(8 + (i * intervalHours), 0, 0, 0); // 8 AM, 11 AM, 2 PM
 
-      if (scheduledTime > now) {
-        const notification: ScheduledNotification = {
-          id: `feeding_${i}_${Date.now()}`,
-          type: 'feeding',
-          title: '🍼 Beslenme Zamanı!',
-          body: `${babyName} için beslenme zamanı geldi`,
-          scheduledTime,
-          recurring: true,
-        };
+      const notification: ScheduledNotification = {
+        id: `feeding_${i}_${Date.now()}`,
+        type: 'feeding',
+        title: '🍼 Beslenme Zamanı!',
+        body: `${babyName} için beslenme zamanı geldi`,
+        scheduledTime,
+        recurring: true,
+      };
 
-        const notificationId = await this.scheduleNotification(notification);
-        if (notificationId) notifications.push(notificationId);
-      }
+      const notificationId = await this.scheduleIfFuture(notification, scheduledTime, now);
+      if (notificationId) notifications.push(notificationId);
     }
 
     return notifications;
@@ -167,19 +177,17 @@ class NotificationService {
     const bedtime = new Date(now);
     bedtime.setHours(20, 0, 0, 0);
 
-    if (bedtime > now) {
-      const notification: ScheduledNotification = {
-        id: `sleep_bedtime_${Date.now()}`,
-        type: 'sleep',
-        title: '😴 Uyku Zamanı!',
-        body: `${babyName} için uyku zamanı geldi`,
-        scheduledTime: bedtime,
-        recurring: true,
-      };
+    const notification: ScheduledNotification = {
+      id: `sleep_bedtime_${Date.now()}`,
+      type: 'sleep',
+      title: '😴 Uyku Zamanı!',
+      body: `${babyName} için uyku zamanı geldi`,
+      scheduledTime: bedtime,
+      recurring: true,
+    };
 
-      const notificationId = await this.scheduleNotification(notification);
-      if (notificationId) notifications.push(notificationId);
-    }
+    const notificationId = await this.scheduleIfFuture(notification, bedtime, now);
+    if (notificationId) notifications.push(notificationId);
 
     return notifications;
   }

@@ -36,6 +36,15 @@ export const IconSizes = {
   '2xl': 48,
 } as const;
 
+// Base shadow definitions
+const createShadow = (offsetHeight: number, opacity: number, radius: number, elevation: number) => ({
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: offsetHeight },
+  shadowOpacity: opacity,
+  shadowRadius: radius,
+  elevation,
+});
+
 export const Shadows = {
   none: {
     shadowColor: 'transparent',
@@ -44,56 +53,14 @@ export const Shadows = {
     shadowRadius: 0,
     elevation: 0,
   },
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  xl: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  // Aliases for convenience
-  small: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  medium: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  large: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
+  sm: createShadow(1, 0.05, 2, 2),
+  md: createShadow(2, 0.1, 4, 4),
+  lg: createShadow(4, 0.15, 8, 8),
+  xl: createShadow(8, 0.2, 16, 12),
+  // Aliases for convenience (reuse existing objects instead of duplicating)
+  get small() { return this.sm; },
+  get medium() { return this.md; },
+  get large() { return this.lg; },
 } as const;
 
 export const Layout = {
