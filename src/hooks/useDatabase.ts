@@ -112,7 +112,7 @@ export const useDatabase = () => {
 
   // Auto-load data when current baby changes
   useEffect(() => {
-    if (database.currentBaby) {
+    if (database.currentBaby?.id) {
       loadActivitiesForBaby(database.currentBaby.id, 10);
       loadHealthRecordsForBaby(database.currentBaby.id);
       loadGrowthRecordsForBaby(database.currentBaby.id);

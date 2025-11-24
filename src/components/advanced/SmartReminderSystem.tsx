@@ -41,7 +41,7 @@ interface SmartRecommendation {
 
 export default function SmartReminderSystem() {
   const { colors } = useTheme();
-  const { scheduleNotification } = useNotifications();
+  const notifications = useNotifications();
   const [reminders, setReminders] = useState<SmartReminder[]>([]);
   const [recommendations, setRecommendations] = useState<SmartRecommendation[]>([]);
   const [activeTab, setActiveTab] = useState<'reminders' | 'recommendations'>('reminders');

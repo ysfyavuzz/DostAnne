@@ -363,7 +363,7 @@ class DatabaseService {
     const result = await this.db.runAsync(
       `INSERT INTO sleep_sessions (babyId, startTime, endTime, duration, quality, notes, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [session.babyId, session.startTime, session.endTime, session.duration, session.quality, session.notes, now]
+      [session.babyId, session.startTime, session.endTime ?? null, session.duration ?? null, session.quality ?? null, session.notes ?? null, now]
     );
 
     if (result.changes > 0) {
@@ -408,7 +408,7 @@ class DatabaseService {
     const result = await this.db.runAsync(
       `INSERT INTO feeding_sessions (babyId, type, startTime, endTime, duration, amount, notes, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [session.babyId, session.type, session.startTime, session.endTime, session.duration, session.amount, session.notes, now]
+      [session.babyId, session.type, session.startTime, session.endTime ?? null, session.duration ?? null, session.amount ?? null, session.notes ?? null, now]
     );
 
     if (result.changes > 0) {
