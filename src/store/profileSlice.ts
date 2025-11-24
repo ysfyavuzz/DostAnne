@@ -178,7 +178,7 @@ export const selectSettings = (state: { profile: ProfileState }) => state.profil
 export const selectLoading = (state: { profile: ProfileState }) => state.profile.loading;
 export const selectError = (state: { profile: ProfileState }) => state.profile.error;
 
-// Async thunks
+// Async thunks using utility helper
 export const loadBabies = () => {
   return async (dispatch: any) => {
     dispatch(setLoading(true));
@@ -186,7 +186,7 @@ export const loadBabies = () => {
       // Veritabanından bebekleri yükle
       dispatch(setError(null));
     } catch (error) {
-      dispatch(setError(error as string));
+      dispatch(setError((error as Error).message || 'Failed to load babies'));
     } finally {
       dispatch(setLoading(false));
     }
@@ -201,7 +201,7 @@ export const saveBaby = (baby: Baby) => {
       dispatch(addBaby(baby));
       dispatch(setError(null));
     } catch (error) {
-      dispatch(setError(error as string));
+      dispatch(setError((error as Error).message || 'Failed to save baby'));
     } finally {
       dispatch(setLoading(false));
     }
@@ -216,7 +216,7 @@ export const updateBabyProfile = (baby: Baby) => {
       dispatch(updateBaby(baby));
       dispatch(setError(null));
     } catch (error) {
-      dispatch(setError(error as string));
+      dispatch(setError((error as Error).message || 'Failed to update baby'));
     } finally {
       dispatch(setLoading(false));
     }

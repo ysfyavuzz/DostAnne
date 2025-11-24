@@ -85,6 +85,41 @@ class DatabaseService {
     this.initDatabase();
   }
 
+  // Helper method for database initialization check
+  private ensureDatabase(): SQLite.SQLiteDatabase {
+    if (!this.db) throw new Error('Database not initialized');
+    return this.db;
+  }
+
+  // Helper method for insert operations with error handling
+  private async executeInsert(query: string, params: any[], errorMessage: string): Promise<number> {
+    const db = this.ensureDatabase();
+    const result = await db.runAsync(query, params);
+    
+    if (result.changes > 0) {
+      return result.lastInsertRowId;
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Helper method for update operations
+  private async executeUpdate(table: string, id: number, updates: Record<string, any>): Promise<boolean> {
+    const db = this.ensureDatabase();
+    const fields = Object.keys(updates).filter(key => key !== 'id');
+    
+    if (fields.length === 0) return false;
+
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    const values = fields.map(field => updates[field]);
+    
+    const result = await db.runAsync(
+      `UPDATE ${table} SET ${setClause} WHERE id = ?`,
+      [...values, id]
+    );
+
+    return result.changes > 0;
+  }
+
   private async initDatabase(): Promise<void> {
     try {
       this.db = await SQLite.openDatabaseAsync('dostanne.db');
@@ -216,39 +251,33 @@ class DatabaseService {
 
   // Baby Profile Methods
   async createBabyProfile(baby: Omit<BabyProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
-
     const now = new Date().toISOString();
-    const result = await this.db.runAsync(
+    const id = await this.executeInsert(
       `INSERT INTO baby_profiles (name, birthDate, gender, weight, height, bloodType, photo, createdAt, updatedAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [baby.name, baby.birthDate, baby.gender, baby.weight, baby.height, baby.bloodType ?? null, baby.photo ?? null, now, now]
+      [baby.name, baby.birthDate, baby.gender, baby.weight, baby.height, baby.bloodType ?? null, baby.photo ?? null, now, now],
+      'Failed to create baby profile'
     );
-
-    if (result.changes > 0) {
-      // Store current baby ID in AsyncStorage
-      await AsyncStorage.setItem('currentBabyId', result.lastInsertRowId.toString());
-      return result.lastInsertRowId;
-    }
-    throw new Error('Failed to create baby profile');
+    
+    // Store current baby ID in AsyncStorage
+    await AsyncStorage.setItem('currentBabyId', id.toString());
+    return id;
   }
 
   async getBabyProfiles(): Promise<BabyProfile[]> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const profiles = await this.db.getAllAsync<BabyProfile>(
+    const db = this.ensureDatabase();
+    const profiles = await db.getAllAsync<BabyProfile>(
       'SELECT * FROM baby_profiles ORDER BY createdAt DESC'
     );
     return profiles;
   }
 
   async getCurrentBabyProfile(): Promise<BabyProfile | null> {
-    if (!this.db) throw new Error('Database not initialized');
-
+    const db = this.ensureDatabase();
     const currentBabyId = await AsyncStorage.getItem('currentBabyId');
     if (!currentBabyId) return null;
 
-    const profile = await this.db.getFirstAsync<BabyProfile>(
+    const profile = await db.getFirstAsync<BabyProfile>(
       'SELECT * FROM baby_profiles WHERE id = ?',
       [parseInt(currentBabyId)]
     );
@@ -274,54 +303,40 @@ class DatabaseService {
 
   // Activity Methods
   async createActivity(activity: Omit<ActivityRecord, 'id' | 'createdAt'>): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
-
     const now = new Date().toISOString();
-    const result = await this.db.runAsync(
+    return this.executeInsert(
       `INSERT INTO activity_records (type, startTime, endTime, duration, notes, babyId, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [activity.type, activity.startTime, activity.endTime ?? null, activity.duration ?? null, activity.notes ?? null, activity.babyId, now]
+      [activity.type, activity.startTime, activity.endTime ?? null, activity.duration ?? null, activity.notes ?? null, activity.babyId, now],
+      'Failed to create activity record'
     );
-
-    if (result.changes > 0) {
-      return result.lastInsertRowId;
-    }
-    throw new Error('Failed to create activity record');
   }
 
   async getActivities(babyId: number, limit?: number): Promise<ActivityRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
-
+    const db = this.ensureDatabase();
     const query = limit 
       ? 'SELECT * FROM activity_records WHERE babyId = ? ORDER BY startTime DESC LIMIT ?'
       : 'SELECT * FROM activity_records WHERE babyId = ? ORDER BY startTime DESC';
     
     const params = limit ? [babyId, limit] : [babyId];
-    const activities = await this.db.getAllAsync<ActivityRecord>(query, params);
+    const activities = await db.getAllAsync<ActivityRecord>(query, params);
     return activities;
   }
 
   // Health Methods
   async createHealthRecord(record: Omit<HealthRecord, 'id' | 'createdAt'>): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
-
     const now = new Date().toISOString();
-    const result = await this.db.runAsync(
+    return this.executeInsert(
       `INSERT INTO health_records (type, title, date, doctor, notes, babyId, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [record.type, record.title, record.date, record.doctor ?? null, record.notes ?? null, record.babyId, now]
+      [record.type, record.title, record.date, record.doctor ?? null, record.notes ?? null, record.babyId, now],
+      'Failed to create health record'
     );
-
-    if (result.changes > 0) {
-      return result.lastInsertRowId;
-    }
-    throw new Error('Failed to create health record');
   }
 
   async getHealthRecords(babyId: number): Promise<HealthRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const records = await this.db.getAllAsync<HealthRecord>(
+    const db = this.ensureDatabase();
+    const records = await db.getAllAsync<HealthRecord>(
       'SELECT * FROM health_records WHERE babyId = ? ORDER BY date DESC',
       [babyId]
     );
@@ -330,25 +345,18 @@ class DatabaseService {
 
   // Growth Methods
   async createGrowthRecord(record: Omit<GrowthRecord, 'id' | 'createdAt'>): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
-
     const now = new Date().toISOString();
-    const result = await this.db.runAsync(
+    return this.executeInsert(
       `INSERT INTO growth_records (date, weight, height, headCircumference, notes, babyId, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [record.date, record.weight ?? null, record.height ?? null, record.headCircumference ?? null, record.notes ?? null, record.babyId, now]
+      [record.date, record.weight ?? null, record.height ?? null, record.headCircumference ?? null, record.notes ?? null, record.babyId, now],
+      'Failed to create growth record'
     );
-
-    if (result.changes > 0) {
-      return result.lastInsertRowId;
-    }
-    throw new Error('Failed to create growth record');
   }
 
   async getGrowthRecords(babyId: number): Promise<GrowthRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const records = await this.db.getAllAsync<GrowthRecord>(
+    const db = this.ensureDatabase();
+    const records = await db.getAllAsync<GrowthRecord>(
       'SELECT * FROM growth_records WHERE babyId = ? ORDER BY date DESC',
       [babyId]
     );
@@ -357,100 +365,61 @@ class DatabaseService {
 
   // Sleep Methods
   async createSleepSession(session: Omit<SleepSession, 'id' | 'createdAt'>): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
-
     const now = new Date().toISOString();
-    const result = await this.db.runAsync(
+    return this.executeInsert(
       `INSERT INTO sleep_sessions (babyId, startTime, endTime, duration, quality, notes, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [session.babyId, session.startTime, session.endTime ?? null, session.duration ?? null, session.quality ?? null, session.notes ?? null, now]
+      [session.babyId, session.startTime, session.endTime ?? null, session.duration ?? null, session.quality ?? null, session.notes ?? null, now],
+      'Failed to create sleep session'
     );
-
-    if (result.changes > 0) {
-      return result.lastInsertRowId;
-    }
-    throw new Error('Failed to create sleep session');
   }
 
   async updateSleepSession(id: number, updates: Partial<SleepSession>): Promise<boolean> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const fields = Object.keys(updates).filter(key => key !== 'id').join(', ');
-    const values = Object.values(updates).filter((_, index) => index < Object.keys(updates).length);
-
-    if (fields.length === 0) return false;
-
-    const result = await this.db.runAsync(
-      `UPDATE sleep_sessions SET ${fields} WHERE id = ?`,
-      [...values, id]
-    );
-
-    return result.changes > 0;
+    return this.executeUpdate('sleep_sessions', id, updates);
   }
 
   async getSleepSessions(babyId: number, limit?: number): Promise<SleepSession[]> {
-    if (!this.db) throw new Error('Database not initialized');
-
+    const db = this.ensureDatabase();
     const query = limit 
       ? 'SELECT * FROM sleep_sessions WHERE babyId = ? ORDER BY startTime DESC LIMIT ?'
       : 'SELECT * FROM sleep_sessions WHERE babyId = ? ORDER BY startTime DESC';
     
     const params = limit ? [babyId, limit] : [babyId];
-    const sessions = await this.db.getAllAsync<SleepSession>(query, params);
+    const sessions = await db.getAllAsync<SleepSession>(query, params);
     return sessions;
   }
 
   // Feeding Methods
   async createFeedingSession(session: Omit<FeedingSession, 'id' | 'createdAt'>): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
-
     const now = new Date().toISOString();
-    const result = await this.db.runAsync(
+    return this.executeInsert(
       `INSERT INTO feeding_sessions (babyId, type, startTime, endTime, duration, amount, notes, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [session.babyId, session.type, session.startTime, session.endTime ?? null, session.duration ?? null, session.amount ?? null, session.notes ?? null, now]
+      [session.babyId, session.type, session.startTime, session.endTime ?? null, session.duration ?? null, session.amount ?? null, session.notes ?? null, now],
+      'Failed to create feeding session'
     );
-
-    if (result.changes > 0) {
-      return result.lastInsertRowId;
-    }
-    throw new Error('Failed to create feeding session');
   }
 
   async updateFeedingSession(id: number, updates: Partial<FeedingSession>): Promise<boolean> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const fields = Object.keys(updates).filter(key => key !== 'id').join(', ');
-    const values = Object.values(updates).filter((_, index) => index < Object.keys(updates).length);
-
-    if (fields.length === 0) return false;
-
-    const result = await this.db.runAsync(
-      `UPDATE feeding_sessions SET ${fields} WHERE id = ?`,
-      [...values, id]
-    );
-
-    return result.changes > 0;
+    return this.executeUpdate('feeding_sessions', id, updates);
   }
 
   async getFeedingSessions(babyId: number, limit?: number): Promise<FeedingSession[]> {
-    if (!this.db) throw new Error('Database not initialized');
-
+    const db = this.ensureDatabase();
     const query = limit 
       ? 'SELECT * FROM feeding_sessions WHERE babyId = ? ORDER BY startTime DESC LIMIT ?'
       : 'SELECT * FROM feeding_sessions WHERE babyId = ? ORDER BY startTime DESC';
     
     const params = limit ? [babyId, limit] : [babyId];
-    const sessions = await this.db.getAllAsync<FeedingSession>(query, params);
+    const sessions = await db.getAllAsync<FeedingSession>(query, params);
     return sessions;
   }
 
   // User Preferences Methods
   async setPreference(key: string, value: string): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
-
+    const db = this.ensureDatabase();
     const now = new Date().toISOString();
-    await this.db.runAsync(
+    await db.runAsync(
       `INSERT OR REPLACE INTO user_preferences (key, value, createdAt, updatedAt)
        VALUES (?, ?, ?, ?)`,
       [key, value, now, now]
@@ -458,9 +427,8 @@ class DatabaseService {
   }
 
   async getPreference(key: string): Promise<string | null> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const pref = await this.db.getFirstAsync<{ value: string }>(
+    const db = this.ensureDatabase();
+    const pref = await db.getFirstAsync<{ value: string }>(
       'SELECT value FROM user_preferences WHERE key = ?',
       [key]
     );
@@ -474,29 +442,28 @@ class DatabaseService {
     diaperChanges: number;
     playTime: number;
   }> {
-    if (!this.db) throw new Error('Database not initialized');
-
+    const db = this.ensureDatabase();
     const today = new Date().toISOString().split('T')[0];
     
-    const feedingCount = await this.db.getFirstAsync<{ count: number }>(
+    const feedingCount = await db.getFirstAsync<{ count: number }>(
       `SELECT COUNT(*) as count FROM feeding_sessions 
        WHERE babyId = ? AND DATE(startTime) = ?`,
       [babyId, today]
     );
 
-    const sleepResult = await this.db.getFirstAsync<{ total: number }>(
+    const sleepResult = await db.getFirstAsync<{ total: number }>(
       `SELECT SUM(duration) as total FROM sleep_sessions 
        WHERE babyId = ? AND DATE(startTime) = ? AND endTime IS NOT NULL`,
       [babyId, today]
     );
 
-    const diaperChanges = await this.db.getFirstAsync<{ count: number }>(
+    const diaperChanges = await db.getFirstAsync<{ count: number }>(
       `SELECT COUNT(*) as count FROM activity_records 
        WHERE babyId = ? AND type = 'diaper' AND DATE(startTime) = ?`,
       [babyId, today]
     );
 
-    const playTime = await this.db.getFirstAsync<{ total: number }>(
+    const playTime = await db.getFirstAsync<{ total: number }>(
       `SELECT SUM(duration) as total FROM activity_records 
        WHERE babyId = ? AND type = 'play' AND DATE(startTime) = ?`,
       [babyId, today]
@@ -512,9 +479,8 @@ class DatabaseService {
 
   // Utility Methods
   async clearAllData(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    await this.db.execAsync(`
+    const db = this.ensureDatabase();
+    await db.execAsync(`
       DELETE FROM activity_records;
       DELETE FROM health_records;
       DELETE FROM growth_records;

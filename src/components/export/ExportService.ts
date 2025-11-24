@@ -195,10 +195,15 @@ export class ExportService {
   }
 }
 
-export const prepareFeedingData = (records: any[]): ExportData => {
-  const sortedRecords = records.sort((a, b) => 
+// Helper function to sort records by timestamp
+const sortRecordsByTimestamp = (records: any[]): any[] => {
+  return records.sort((a, b) => 
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
+};
+
+export const prepareFeedingData = (records: any[]): ExportData => {
+  const sortedRecords = sortRecordsByTimestamp(records);
 
   const feedingByType = sortedRecords.reduce((acc, record) => {
     const type = record.type === 'breast' ? 'Anne Sütü' : 
@@ -237,9 +242,7 @@ export const prepareFeedingData = (records: any[]): ExportData => {
 };
 
 export const prepareHealthData = (records: any[], vaccinations: any[]): ExportData => {
-  const sortedRecords = records.sort((a, b) => 
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  const sortedRecords = sortRecordsByTimestamp(records);
 
   const healthStats = sortedRecords.reduce((acc, record) => {
     if (!acc[record.type]) acc[record.type] = [];
@@ -307,9 +310,7 @@ export const prepareHealthData = (records: any[], vaccinations: any[]): ExportDa
 };
 
 export const prepareSleepData = (records: any[]): ExportData => {
-  const sortedRecords = records.sort((a, b) => 
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  const sortedRecords = sortRecordsByTimestamp(records);
 
   const sleepStats = {
     totalSessions: sortedRecords.length,
