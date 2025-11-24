@@ -55,7 +55,7 @@ timeout: '1200s'
 options:
   machineType: 'N1_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
-  
+
 # Artifact Registry kullanımı için alternatif (GCR yerine)
 # images bölümünü şu şekilde değiştirebilirsiniz:
 # images:
