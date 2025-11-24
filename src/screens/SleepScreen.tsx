@@ -80,8 +80,8 @@ const SleepScreenNew = () => {
         quality: 'good',
       });
       
-      if (result.payload) {
-        setCurrentSessionId(result.payload?.id);
+      if (result.payload && typeof result.payload === 'object' && 'id' in result.payload) {
+        setCurrentSessionId((result.payload as any).id);
       }
     } catch (error) {
       console.error('Failed to start sleep session:', error);

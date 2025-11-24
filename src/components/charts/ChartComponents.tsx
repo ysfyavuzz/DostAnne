@@ -273,6 +273,8 @@ export const ComparisonBarChart: React.FC<ComparisonBarChartProps> = ({
         data={data}
         width={width - 40}
         height={height}
+        yAxisLabel=""
+        yAxisSuffix=""
         chartConfig={chartConfig}
         style={styles.chart}
         showValuesOnTopOfBars

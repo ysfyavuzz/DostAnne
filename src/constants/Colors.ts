@@ -151,6 +151,12 @@ export const Colors = {
     sleep: ['#4A90E2', '#3B82F6'],
     feeding: ['#FF7B2E', '#E66929'],
     diaper: ['#9FC95F', '#86B83C'],
+    purple: ['#8B5CF6', '#6D28D9'], // Mor Gradient
+    sunset: ['#FF7B2E', '#E66929'], // Turuncu-Kırmızı Gradient
+    ocean: ['#4A90E2', '#3B82F6'], // Mavi Gradient
+    blue: ['#4A90E2', '#3B82F6'], // Mavi Gradient (alias for ocean)
+    pink: ['#FF2D92', '#EC4899'], // Pembe Gradient
+    green: ['#9FC95F', '#86B83C'], // Yeşil Gradient (alias for primary)
   },
 } as const;
 

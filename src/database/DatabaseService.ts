@@ -309,7 +309,7 @@ class DatabaseService {
     const result = await this.db.runAsync(
       `INSERT INTO health_records (type, title, date, doctor, notes, babyId, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [record.type, record.title, record.date, record.doctor, record.notes, record.babyId, now]
+      [record.type, record.title, record.date, record.doctor ?? null, record.notes ?? null, record.babyId, now]
     );
 
     if (result.changes > 0) {
@@ -336,7 +336,7 @@ class DatabaseService {
     const result = await this.db.runAsync(
       `INSERT INTO growth_records (date, weight, height, headCircumference, notes, babyId, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [record.date, record.weight, record.height, record.headCircumference, record.notes, record.babyId, now]
+      [record.date, record.weight ?? null, record.height ?? null, record.headCircumference ?? null, record.notes ?? null, record.babyId, now]
     );
 
     if (result.changes > 0) {
@@ -363,7 +363,7 @@ class DatabaseService {
     const result = await this.db.runAsync(
       `INSERT INTO sleep_sessions (babyId, startTime, endTime, duration, quality, notes, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [session.babyId, session.startTime, session.endTime, session.duration, session.quality, session.notes, now]
+      [session.babyId, session.startTime, session.endTime ?? null, session.duration ?? null, session.quality ?? null, session.notes ?? null, now]
     );
 
     if (result.changes > 0) {
@@ -408,7 +408,7 @@ class DatabaseService {
     const result = await this.db.runAsync(
       `INSERT INTO feeding_sessions (babyId, type, startTime, endTime, duration, amount, notes, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [session.babyId, session.type, session.startTime, session.endTime, session.duration, session.amount, session.notes, now]
+      [session.babyId, session.type, session.startTime, session.endTime ?? null, session.duration ?? null, session.amount ?? null, session.notes ?? null, now]
     );
 
     if (result.changes > 0) {

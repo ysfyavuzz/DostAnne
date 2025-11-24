@@ -152,6 +152,8 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
 
   const isInNormalRange = () => {
     const current = getCurrentValue();
+    if (current === undefined) return false;
+    
     switch (type) {
       case 'weight':
         return current >= latestData.normalWeight.min && current <= latestData.normalWeight.max;

@@ -194,7 +194,7 @@ const SleepChart: React.FC<SleepChartProps> = ({
       {type === 'quality' ? (
         <View style={styles.pieChartContainer}>
           <PieChart
-            data={chartData.data}
+            data={'data' in chartData ? chartData.data : []}
             width={screenWidth}
             height={chartHeight}
             chartConfig={{
@@ -234,7 +234,7 @@ const SleepChart: React.FC<SleepChartProps> = ({
               />
             ) : (
               <LineChart
-                data={chartData}
+                data={'labels' in chartData ? chartData : { labels: [], datasets: [] }}
                 width={Math.max(screenWidth, data.length * 70)}
                 height={chartHeight}
                 chartConfig={{
@@ -261,13 +261,13 @@ const SleepChart: React.FC<SleepChartProps> = ({
         </ScrollView>
       )}
 
-      {type !== 'quality' && chartData.legends && (
+      {type !== 'quality' && 'legends' in chartData && chartData.legends && Array.isArray(chartData.legends) && (
         <View style={styles.legendContainer}>
           {chartData.legends.map((legend: string, index: number) => (
             <View key={index} style={styles.legendItem}>
               <View style={[
                 styles.legendColor,
-                { backgroundColor: chartData.datasets[index]?.color(1) || '#007AFF' }
+                { backgroundColor: 'datasets' in chartData && Array.isArray(chartData.datasets) && chartData.datasets[index]?.color(1) || '#007AFF' }
               ]} />
               <Text style={styles.legendText}>{legend}</Text>
             </View>

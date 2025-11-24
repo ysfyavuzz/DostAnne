@@ -36,7 +36,7 @@ const organSystems = [
 ] as const;
 
 export default function BiologicalDevelopmentScreen() {
-  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { colors, spacing, borderRadius, typography, shadows, isDark } = useThemedStyles();
   const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
 
   const [selectedSystem, setSelectedSystem] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export default function BiologicalDevelopmentScreen() {
 
   if (!biologicalData) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.background.dark : colors.background.light }]}>
         <View style={styles.noDataContainer}>
           <Ionicons name="information-circle" size={64} color={colors.neutral[400]} />
           <Text style={[styles.noDataText, typography.h3, { color: colors.text }]}>
@@ -221,7 +221,7 @@ export default function BiologicalDevelopmentScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.background.dark : colors.background.light }]} edges={['bottom']}>
       {/* Header */}
       <LinearGradient colors={colors.gradients.blue} style={[styles.header, shadows.medium]}>
         <Text style={[styles.headerTitle, typography.h1, { color: 'white' }]}>

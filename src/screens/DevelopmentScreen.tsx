@@ -310,7 +310,7 @@ const standardMilestones: Omit<Milestone, 'id' | 'completed' | 'completedDate'>[
 ];
 
 export default function DevelopmentScreenNew() {
-  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { colors, spacing, borderRadius, typography, shadows, isDark } = useThemedStyles();
   const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
 
   const [selectedTab, setSelectedTab] = useState<'growth' | 'milestones'>('growth');

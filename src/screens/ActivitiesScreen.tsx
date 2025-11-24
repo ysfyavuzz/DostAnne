@@ -18,14 +18,14 @@ import { useThemedStyles } from '../hooks/useThemedStyles';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AppHeader } from '../components/ui/AppHeader';
 
-type ActivityType = 'feeding' | 'sleep' | 'diaper' | 'health' | 'play' | 'milestone';
+type ActivityType = 'feeding' | 'sleep' | 'diaper' | 'health' | 'milestone' | 'medication';
 
 interface ActivityTypeConfig {
   type: ActivityType;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   color: string;
-  gradient: string[];
+  gradient: readonly string[] | string[];
 }
 
 const ActivitiesScreenNew = () => {
@@ -70,10 +70,10 @@ const ActivitiesScreenNew = () => {
       gradient: colors.gradients.sunset,
     },
     { 
-      type: 'play', 
-      icon: 'game-controller', 
-      label: 'Oyun', 
-      color: colors.activity.play,
+      type: 'medication', 
+      icon: 'medkit', 
+      label: 'İlaç', 
+      color: colors.activity.health,
       gradient: colors.gradients.ocean,
     },
     { 

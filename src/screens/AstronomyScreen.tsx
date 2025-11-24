@@ -74,7 +74,7 @@ const horoscopeTraits: Record<string, { characteristics: string[]; parenting: st
 };
 
 export default function AstronomyScreenNew() {
-  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { colors, spacing, borderRadius, typography, shadows, isDark } = useThemedStyles();
   const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
   
   const [selectedSign, setSelectedSign] = useState<string | null>(null);
@@ -107,7 +107,7 @@ export default function AstronomyScreenNew() {
   const traits = signToDisplay ? horoscopeTraits[signToDisplay] : null;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.background.dark : colors.background.light }]} edges={['bottom']}>
       <LinearGradient colors={['#8B5CF6', '#6D28D9']} style={[styles.header, shadows.medium]}>
         <Ionicons name="sparkles" size={48} color="white" />
         <Text style={[styles.headerTitle, typography.h1, { color: 'white' }]}>Burçlar</Text>

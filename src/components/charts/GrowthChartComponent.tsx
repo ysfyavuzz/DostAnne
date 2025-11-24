@@ -45,7 +45,7 @@ export const GrowthChartComponent: React.FC<GrowthChartComponentProps> = ({
     const startDate = new Date(now.getTime() - (periodMonths * 30 * 24 * 60 * 60 * 1000));
     
     const data: GrowthDataPoint[] = [];
-    const babyAgeMonths = baby?.age ? parseInt(baby.age) : 6;
+    const babyAgeMonths = baby?.ageInMonths ?? 6;
     
     for (let i = 0; i <= periodMonths; i += 2) {
       const date = new Date(startDate.getTime() + (i * 30 * 24 * 60 * 60 * 1000));
@@ -140,7 +140,7 @@ export const GrowthChartComponent: React.FC<GrowthChartComponentProps> = ({
   };
 
   const percentiles = calculatePercentiles(
-    parseInt(baby?.age || '6'),
+    baby?.ageInMonths ?? 6,
     currentWeight,
     currentHeight
   );
