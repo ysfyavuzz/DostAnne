@@ -111,6 +111,30 @@ npx expo run:ios
 npx expo run:android
 ```
 
+### 🌐 Web ve Cloud Deployment
+
+#### Web Versiyonu
+```bash
+# Web için build alın
+npx expo export --platform web
+
+# Local test için
+npx serve dist -l 8080
+```
+
+#### Google Cloud Build ile Deploy
+Bu proje Google Cloud Build ile deploy edilmeye hazırdır. Detaylı bilgi için:
+
+```bash
+# Cloud Build yapılandırmasını test edin
+./scripts/test-cloud-build.sh
+
+# Cloud Build ile build alın
+gcloud builds submit --config cloudbuild.yaml .
+```
+
+📖 **Detaylı rehber**: [docs/CLOUD_BUILD_GUIDE.md](docs/CLOUD_BUILD_GUIDE.md)
+
 ## 📋 Kullanım Kılavuzu
 
 ### 👶 Bebek Profili Oluşturma
