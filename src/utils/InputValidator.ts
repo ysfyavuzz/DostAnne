@@ -109,28 +109,35 @@ export class InputValidator {
   /**
    * Validate positive number within a range
    * Used for weight, height, etc.
+   * @param value The number to validate
+   * @param min Minimum value (exclusive)
+   * @param max Maximum value (inclusive)
    */
   static validatePositiveNumber(
     value: number,
     min: number = 0,
     max: number = Number.MAX_SAFE_INTEGER
   ): boolean {
-    if (typeof value !== 'number' || isNaN(value) || value <= min) {
+    if (typeof value !== 'number' || isNaN(value)) {
       throw new Error('Geçersiz sayı');
     }
 
+    if (value <= min) {
+      throw new Error(`Değer ${min}'den büyük olmalıdır`);
+    }
+
     if (value > max) {
-      throw new Error(`Değer ${min} ile ${max} arasında olmalıdır`);
+      throw new Error(`Değer ${max}'dan küçük veya eşit olmalıdır`);
     }
 
     return true;
   }
 
   /**
-   * Validate weight (0.1 - 200 kg)
+   * Validate weight (must be greater than 0.05 kg and up to 200 kg)
    */
   static validateWeight(weight: number): boolean {
-    return this.validatePositiveNumber(weight, 0.09, 200);
+    return this.validatePositiveNumber(weight, 0.05, 200);
   }
 
   /**

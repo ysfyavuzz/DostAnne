@@ -123,13 +123,13 @@ describe('DatabaseService Security Tests', () => {
     });
 
     it('should reject zero and negative numbers', () => {
-      // Both 0 and negative numbers throw "Geçersiz sayı" because they are <= min
-      expect(() => InputValidator.validatePositiveNumber(0, 0, 100)).toThrow();
-      expect(() => InputValidator.validatePositiveNumber(-5, 0, 100)).toThrow();
+      // Both 0 and negative numbers throw because they are <= min
+      expect(() => InputValidator.validatePositiveNumber(0, 0, 100)).toThrow('büyük olmalıdır');
+      expect(() => InputValidator.validatePositiveNumber(-5, 0, 100)).toThrow('büyük olmalıdır');
     });
 
     it('should reject numbers outside range', () => {
-      expect(() => InputValidator.validatePositiveNumber(150, 0, 100)).toThrow('arasında');
+      expect(() => InputValidator.validatePositiveNumber(150, 0, 100)).toThrow('küçük veya eşit');
     });
 
     it('should reject non-numeric values', () => {

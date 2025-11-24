@@ -94,7 +94,8 @@ class DatabaseService {
       Logger.info('Database initialized successfully');
     } catch (error) {
       Logger.error('Database initialization failed', error);
-      throw error;
+      // Throw a generic error to avoid exposing database details
+      throw new Error('Failed to initialize database. Please try again.');
     }
   }
 

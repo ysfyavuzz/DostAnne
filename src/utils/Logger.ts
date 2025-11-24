@@ -8,7 +8,9 @@ type LogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
 
 class Logger {
   private static readonly PREFIX = '[DostAnne]';
-  private static readonly isDevelopment = __DEV__;
+  // Use __DEV__ which is available in React Native/Expo environment
+  private static readonly isDevelopment =
+    typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
 
   /**
    * Log general information (development only)
