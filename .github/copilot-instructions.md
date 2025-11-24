@@ -22,11 +22,11 @@ DostAnne is a comprehensive baby care tracking mobile application designed for m
 
 ### Frontend
 - **Framework:** React Native (v0.81.5)
-- **Platform:** Expo (~54.0.20)
+- **Platform:** Expo (v54.0.20)
 - **Language:** TypeScript (v5.9.2) with strict mode enabled
-- **Navigation:** Expo Router (v6.0.13) with tab-based navigation
+- **Navigation:** Expo Router (v6.0.13) with React Navigation (v7.1.8) for tab-based navigation
 - **UI Components:** React Native Elements, Expo Symbols
-- **State Management:** Redux Toolkit (@reduxjs/toolkit v2.9.2)
+- **State Management:** Redux Toolkit (v2.9.2)
 
 ### Data & Storage
 - **Database:** SQLite (expo-sqlite v16.0.8)
