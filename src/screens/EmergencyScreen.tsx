@@ -173,7 +173,7 @@ const firstAidTopics: FirstAidTopic[] = [
 ];
 
 export default function EmergencyScreenNew() {
-  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { colors, spacing, borderRadius, typography, shadows, isDark } = useThemedStyles();
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
 
   const handleCall = async (number: string, name: string) => {

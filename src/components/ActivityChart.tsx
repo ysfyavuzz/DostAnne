@@ -241,7 +241,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
       {type === 'summary' ? (
         <View style={styles.pieChartContainer}>
           <PieChart
-            data={chartData.data}
+            data={'data' in chartData ? chartData.data : []}
             width={screenWidth}
             height={chartHeight}
             chartConfig={{
@@ -258,7 +258,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
           <View style={styles.chartContainer}>
             {type === 'daily' ? (
               <BarChart
-                data={chartData}
+                data={'labels' in chartData ? chartData : { labels: [], datasets: [] }}
                 width={Math.max(screenWidth, data.length * 70)}
                 height={chartHeight}
                 chartConfig={{
@@ -280,7 +280,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
               />
             ) : (
               <LineChart
-                data={chartData}
+                data={'labels' in chartData ? chartData : { labels: [], datasets: [] }}
                 width={Math.max(screenWidth, data.length * 70)}
                 height={chartHeight}
                 chartConfig={{
@@ -307,13 +307,13 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
         </ScrollView>
       )}
 
-      {type !== 'summary' && chartData.legends && (
+      {type !== 'summary' && 'legends' in chartData && chartData.legends && Array.isArray(chartData.legends) && (
         <View style={styles.legendContainer}>
           {chartData.legends.map((legend: string, index: number) => (
             <View key={index} style={styles.legendItem}>
               <View style={[
                 styles.legendColor,
-                { backgroundColor: chartData.datasets[index]?.color(1) || '#007AFF' }
+                { backgroundColor: 'datasets' in chartData && Array.isArray(chartData.datasets) && chartData.datasets[index]?.color(1) || '#007AFF' }
               ]} />
               <Text style={styles.legendText}>{legend}</Text>
             </View>
@@ -325,7 +325,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
         <Text style={styles.insightTitle}>📊 Aktivite Analizi</Text>
         <Text style={styles.insightText}>
           {type === 'summary' 
-            ? `Son 7 günde toplam ${chartData.total} aktivite kaydedildi. ${mostFrequent.icon} ${mostFrequent.name} en sık yapılan aktivite.`
+            ? `Son 7 günde toplam ${'total' in chartData ? chartData.total : 0} aktivite kaydedildi. ${mostFrequent.icon} ${mostFrequent.name} en sık yapılan aktivite.`
             : type === 'daily'
             ? `Günlük ortalama ${getAverageActivities()} aktivite. ${mostActiveDay.date.split(' ')[0]} en aktif gündü.`
             : type === 'trends'

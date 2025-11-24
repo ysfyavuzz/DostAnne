@@ -47,7 +47,7 @@ const reminderTypes = [
 const dayNames = ['Pzr', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 
 export default function NotificationsScreenNew() {
-  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { colors, spacing, borderRadius, typography, shadows, isDark } = useThemedStyles();
 
   const [settings, setSettings] = useState<NotificationSettings>({
     enabled: true,

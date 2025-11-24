@@ -1,9 +1,19 @@
 // https://docs.expo.dev/guides/using-eslint/
-module.exports = {
-  extends: ['expo', 'prettier'],
-  plugins: [],
-  rules: {
-    // Custom rules can be added here
+const { FlatCompat } = require('@eslint/eslintrc');
+const path = require('path');
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
+module.exports = [
+  ...compat.extends('expo', 'prettier'),
+  {
+    ignores: ['dist/*', 'node_modules/*', '.expo/*', 'build/*'],
   },
-  ignorePatterns: ['dist/*', 'node_modules/*'],
-};
+  {
+    rules: {
+      // Custom rules can be added here
+    },
+  },
+];

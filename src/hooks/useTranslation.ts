@@ -241,7 +241,7 @@ export function useTranslation() {
     language,
     t,
     changeLanguage,
-    isRTL: language === 'ar', // For future Arabic support
+    isRTL: false, // For future Arabic support (language === 'ar')
   };
 }
 

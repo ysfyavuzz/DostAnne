@@ -11,7 +11,6 @@ import {
   LineChart,
   BarChart,
   PieChart,
-  AreaChart,
 } from 'react-native-chart-kit';
 import { useTheme } from '@/src/hooks/useTheme';
 import { createText } from '@/src/components/ThemedText';
@@ -226,12 +225,13 @@ export default function FeedingAnalysisChart({
       {/* Toplam Miktar Grafiği */}
       <View style={[styles.chartContainer, { backgroundColor: colors.card }]}>
         <ThemedText style={styles.chartTitle}>Toplam Beslenme Miktarı</ThemedText>
-        <AreaChart
+        <LineChart
           data={getTotalFeedingData()}
           width={screenWidth - 40}
           height={200}
           chartConfig={chartConfig}
           style={styles.chart}
+          bezier
         />
       </View>
 

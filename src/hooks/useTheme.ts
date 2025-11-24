@@ -3,7 +3,7 @@ import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeType = 'light' | 'dark' | 'auto';
-export type AccentColor = 'primary' | 'secondary' | 'blue' | 'purple' | 'pink';
+export type AccentColor = 'primary' | 'secondary' | 'blue' | 'purple' | 'pink' | 'green' | 'orange';
 
 export interface Theme {
   type: ThemeType;
@@ -68,6 +68,8 @@ const accentColors: Record<AccentColor, { light: string; dark: string }> = {
   blue: { light: '#4A90E2', dark: '#5AC8FA' },
   purple: { light: '#AF52DE', dark: '#BF5AF2' },
   pink: { light: '#FF2D92', dark: '#FF2D92' },
+  green: { light: '#34C759', dark: '#30D158' },
+  orange: { light: '#FF9500', dark: '#FF9F0A' },
 };
 
 export function useTheme() {

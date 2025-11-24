@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/src/hooks/useTheme';
 import { createText } from '@/src/components/ThemedText';
 import { useNotifications } from '@/src/hooks/useNotifications';
+import { notificationService } from '@/src/services/NotificationService';
 
 const ThemedText = createText();
 
@@ -41,7 +42,7 @@ interface SmartRecommendation {
 
 export default function SmartReminderSystem() {
   const { colors } = useTheme();
-  const { scheduleNotification } = useNotifications();
+  const notifications = useNotifications();
   const [reminders, setReminders] = useState<SmartReminder[]>([]);
   const [recommendations, setRecommendations] = useState<SmartRecommendation[]>([]);
   const [activeTab, setActiveTab] = useState<'reminders' | 'recommendations'>('reminders');
@@ -148,14 +149,30 @@ export default function SmartReminderSystem() {
         { text: 'İptal', style: 'cancel' },
         {
           text: 'Ayarla',
-          onPress: () => {
+          onPress: async () => {
             // Burada gerçek bildirim planlama mantığı
-            scheduleNotification(
-              reminder.title,
-              reminder.description,
-              new Date()
-            );
-            Alert.alert('Başarılı', 'Hatırlatıcı ayarlandı');
+            try {
+              const scheduledTime = new Date();
+              // Parse time string (e.g., "09:00") and set it
+              const [hours, minutes] = reminder.time.split(':').map(Number);
+              scheduledTime.setHours(hours, minutes, 0, 0);
+              
+              // Map reminder type to notification type
+              let notificationType: 'feeding' | 'sleep' | 'vaccine' | 'diaper' | 'medical' = 'feeding';
+              if (reminder.type === 'sleep') notificationType = 'sleep';
+              else if (reminder.type === 'health') notificationType = 'medical';
+              
+              await notificationService.scheduleNotification({
+                id: reminder.id,
+                title: reminder.title,
+                body: reminder.description,
+                scheduledTime: scheduledTime,
+                type: notificationType,
+              });
+              Alert.alert('Başarılı', 'Hatırlatıcı ayarlandı');
+            } catch (error) {
+              Alert.alert('Hata', 'Hatırlatıcı ayarlanamadı');
+            }
           },
         },
       ]

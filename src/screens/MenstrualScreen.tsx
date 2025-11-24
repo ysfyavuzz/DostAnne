@@ -16,7 +16,7 @@ interface Period {
 const symptoms = ['Kramp', 'Şişkinlik', 'Baş Ağrısı', 'Yorgunluk', 'Hassasiyet', 'Aç Gözlülük'];
 
 export default function MenstrualScreenNew() {
-  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { colors, spacing, borderRadius, typography, shadows, isDark } = useThemedStyles();
   const [periods, setPeriods] = useState<Period[]>([
     { id: '1', startDate: '2024-11-01', endDate: '2024-11-05', symptoms: ['Kramp', 'Yorgunluk'], flow: 'medium' },
     { id: '2', startDate: '2024-10-03', endDate: '2024-10-07', symptoms: ['Hassasiyet'], flow: 'light' },
