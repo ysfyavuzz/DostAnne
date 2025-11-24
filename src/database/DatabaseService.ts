@@ -259,13 +259,15 @@ class DatabaseService {
     if (!this.db) throw new Error('Database not initialized');
 
     const updatedAt = new Date().toISOString();
-    const fields = Object.keys(updates).filter(key => key !== 'id').join(', ');
-    const values = Object.values(updates).filter((_, index) => index < Object.keys(updates).length - 2);
+    const filteredUpdates = Object.entries(updates).filter(([key]) => key !== 'id');
+    
+    if (filteredUpdates.length === 0) return false;
 
-    if (fields.length === 0) return false;
+    const setClause = filteredUpdates.map(([key]) => `${key} = ?`).join(', ');
+    const values = filteredUpdates.map(([, value]) => value);
 
     const result = await this.db.runAsync(
-      `UPDATE baby_profiles SET ${fields}, updatedAt = ? WHERE id = ?`,
+      `UPDATE baby_profiles SET ${setClause}, updatedAt = ? WHERE id = ?`,
       [...values, updatedAt, id]
     );
 
@@ -375,13 +377,15 @@ class DatabaseService {
   async updateSleepSession(id: number, updates: Partial<SleepSession>): Promise<boolean> {
     if (!this.db) throw new Error('Database not initialized');
 
-    const fields = Object.keys(updates).filter(key => key !== 'id').join(', ');
-    const values = Object.values(updates).filter((_, index) => index < Object.keys(updates).length);
+    const filteredUpdates = Object.entries(updates).filter(([key]) => key !== 'id');
+    
+    if (filteredUpdates.length === 0) return false;
 
-    if (fields.length === 0) return false;
+    const setClause = filteredUpdates.map(([key]) => `${key} = ?`).join(', ');
+    const values = filteredUpdates.map(([, value]) => value);
 
     const result = await this.db.runAsync(
-      `UPDATE sleep_sessions SET ${fields} WHERE id = ?`,
+      `UPDATE sleep_sessions SET ${setClause} WHERE id = ?`,
       [...values, id]
     );
 
@@ -420,13 +424,15 @@ class DatabaseService {
   async updateFeedingSession(id: number, updates: Partial<FeedingSession>): Promise<boolean> {
     if (!this.db) throw new Error('Database not initialized');
 
-    const fields = Object.keys(updates).filter(key => key !== 'id').join(', ');
-    const values = Object.values(updates).filter((_, index) => index < Object.keys(updates).length);
+    const filteredUpdates = Object.entries(updates).filter(([key]) => key !== 'id');
+    
+    if (filteredUpdates.length === 0) return false;
 
-    if (fields.length === 0) return false;
+    const setClause = filteredUpdates.map(([key]) => `${key} = ?`).join(', ');
+    const values = filteredUpdates.map(([, value]) => value);
 
     const result = await this.db.runAsync(
-      `UPDATE feeding_sessions SET ${fields} WHERE id = ?`,
+      `UPDATE feeding_sessions SET ${setClause} WHERE id = ?`,
       [...values, id]
     );
 

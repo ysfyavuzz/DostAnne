@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -111,17 +111,56 @@ export default function CalendarScreenNew() {
     return activities.filter((a) => new Date(a.startTime).toDateString() === dateStr);
   }, [selectedDate, activities]);
 
-  // Check if a date has appointments
-  const hasAppointments = (day: number) => {
-    const dateStr = new Date(calendarData.year, calendarData.month, day).toISOString().split('T')[0];
-    return appointments.some((apt) => apt.date === dateStr);
-  };
+  // Memoize date strings for all days in current month to avoid repeated calculations
+  const monthDatesMap = useMemo(() => {
+    const map = new Map<number, { iso: string; dateStr: string }>();
+    for (let day = 1; day <= calendarData.days.length; day++) {
+      const date = new Date(calendarData.year, calendarData.month, day);
+      map.set(day, {
+        iso: date.toISOString().split('T')[0],
+        dateStr: date.toDateString(),
+      });
+    }
+    return map;
+  }, [calendarData.year, calendarData.month, calendarData.days.length]);
 
-  // Check if a date has activities
-  const hasActivities = (day: number) => {
-    const dateStr = new Date(calendarData.year, calendarData.month, day).toDateString();
-    return activities.some((a) => new Date(a.startTime).toDateString() === dateStr);
-  };
+  // Memoize which days have appointments/activities
+  const daysWithAppointments = useMemo(() => {
+    const set = new Set<number>();
+    appointments.forEach((apt) => {
+      for (let day = 1; day <= calendarData.days.length; day++) {
+        const dateInfo = monthDatesMap.get(day);
+        if (dateInfo && apt.date === dateInfo.iso) {
+          set.add(day);
+        }
+      }
+    });
+    return set;
+  }, [appointments, calendarData.days.length, monthDatesMap]);
+
+  const daysWithActivities = useMemo(() => {
+    const set = new Set<number>();
+    activities.forEach((activity) => {
+      const activityDateStr = new Date(activity.startTime).toDateString();
+      for (let day = 1; day <= calendarData.days.length; day++) {
+        const dateInfo = monthDatesMap.get(day);
+        if (dateInfo && activityDateStr === dateInfo.dateStr) {
+          set.add(day);
+        }
+      }
+    });
+    return set;
+  }, [activities, calendarData.days.length, monthDatesMap]);
+
+  // Check if a date has appointments - now using memoized set
+  const hasAppointments = useCallback((day: number) => {
+    return daysWithAppointments.has(day);
+  }, [daysWithAppointments]);
+
+  // Check if a date has activities - now using memoized set
+  const hasActivities = useCallback((day: number) => {
+    return daysWithActivities.has(day);
+  }, [daysWithActivities]);
 
   // Navigate month
   const goToPreviousMonth = () => {
