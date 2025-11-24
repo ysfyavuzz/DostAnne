@@ -1,0 +1,73 @@
+# Google Cloud Build - Ignore File
+# Bu dosya, Cloud Build'e hangi dosyaların gönderilmeyeceğini belirtir
+# .gitignore benzeri çalışır ancak Cloud Build için özeldir
+
+# Git metadata
+.git/
+.gitignore
+.github/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# Note: package-lock.json is NOT ignored because npm ci requires it for reproducible builds
+
+# Build outputs (bunlar Docker içinde oluşturulacak)
+dist/
+.expo/
+.expo-shared/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files (güvenlik için)
+.env
+.env.local
+.env.*.local
+
+# Test ve Coverage
+coverage/
+.nyc_output/
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Documentation
+*.md
+docs/
+CHANGELOG.md
+HATA_ANALIZI.md
+IMPLEMENTATION_SUMMARY.md
+ONERI_VE_YOL_HARITASI.md
+OZET_RAPOR.md
+DUZELTILEN_HATALAR.md
+
+# Temporary files
+*.log
+*.tmp
+tmp/
+.cache/
+
+# Expo
+.expo-shared/
+
+# Scripts (build sırasında gerekmez)
+scripts/
