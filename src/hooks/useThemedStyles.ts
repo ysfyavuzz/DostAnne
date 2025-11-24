@@ -15,9 +15,9 @@ export const useThemedStyles = () => {
 
   // useTheme'dan gelen dinamik renkleri ve statik sabitleri birleştir
   const colors = useMemo(() => ({
-    ...themeColors,
     ...Colors, // Statik renk paletini de ekle
     ...DarkColors, // Dark renk paletini de ekle
+    ...themeColors, // Theme colors should override to get flat text, background, etc.
   }), [themeColors]);
 
   return {
