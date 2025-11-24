@@ -137,17 +137,14 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = React.memo
       .slice(0, 3);
   }, [vaccinations]);
 
-  const metricData = healthMetricData;
-  const stats = vaccinationStats;
-  const criticalVaccines = criticalVaccinations;
-  const healthScoreData = healthScoreDistribution;
+
 
   const chartConfig = {
     backgroundColor: colors.card,
     backgroundGradientFrom: colors.card,
     backgroundGradientTo: colors.card,
     decimalPlaces: selectedMetric === 'temperature' ? 1 : 0,
-    color: (opacity = 1) => metricData.color,
+    color: (opacity = 1) => healthMetricData.color,
     labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
     style: {
       borderRadius: 16,
@@ -259,10 +256,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = React.memo
       {/* Sağlık Metrik Grafiği */}
       <View style={[styles.chartContainer, { backgroundColor: colors.card }]}>
         <ThemedText style={styles.chartTitle}>
-          {metricData.label} Geçmişi
+          {healthMetricData.label} Geçmişi
         </ThemedText>
         <LineChart
-          data={metricData}
+          data={healthMetricData}
           width={screenWidth - 40}
           height={220}
           chartConfig={chartConfig}
@@ -271,14 +268,14 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = React.memo
           withInnerLines={true}
           withOuterLines={true}
         />
-        <ThemedText style={styles.chartUnit}>Birim: {metricData.unit}</ThemedText>
+        <ThemedText style={styles.chartUnit}>Birim: {healthMetricData.unit}</ThemedText>
       </View>
 
       {/* Sağlık Skoru Dağılımı */}
       <View style={[styles.chartContainer, { backgroundColor: colors.card }]}>
         <ThemedText style={styles.chartTitle}>Sağlık Skoru Dağılımı</ThemedText>
         <ProgressChart
-          data={healthScoreData}
+          data={healthScoreDistribution}
           width={screenWidth - 40}
           height={200}
           strokeWidth={16}
@@ -327,10 +324,10 @@ const HealthMetricsDashboard: React.FC<HealthMetricsDashboardProps> = React.memo
         </View>
 
         {/* Kritik Aşılar */}
-        {criticalVaccines.length > 0 && (
+        {criticalVaccinations.length > 0 && (
           <View style={styles.criticalVaccines}>
             <ThemedText style={styles.criticalTitle}>Kritik Aşılar</ThemedText>
-            {criticalVaccines.map((vaccine) => (
+            {criticalVaccinations.map((vaccine) => (
               <View key={vaccine.id} style={styles.criticalVaccineItem}>
                 <Ionicons 
                   name="warning-outline" 

@@ -56,7 +56,8 @@ export const formatDateTR = (
 
 /**
  * Get date string (without time) from Date object
- * More efficient than toISOString().split('T')[0]
+ * Returns format like 'Mon Nov 24 2024'
+ * Use for day comparison via toDateString()
  */
 export const getDateString = (date: Date): string => {
   return date.toDateString();
