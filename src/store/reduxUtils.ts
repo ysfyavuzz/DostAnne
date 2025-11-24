@@ -3,7 +3,20 @@
  * Reduces code duplication in Redux slices
  */
 
-import { PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction, Dispatch, AnyAction } from '@reduxjs/toolkit';
+
+/**
+ * Helper to safely extract error message from unknown error
+ */
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return 'Operation failed';
+};
 
 /**
  * Creates a standard async thunk handler for loading operations
@@ -13,7 +26,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
  * @param operation - Async operation to perform
  */
 export const createLoadingThunk = async <T>(
-  dispatch: any,
+  dispatch: Dispatch<AnyAction>,
   setLoading: (loading: boolean) => PayloadAction<boolean>,
   setError: (error: string | null) => PayloadAction<string | null>,
   operation: () => Promise<T>
@@ -24,7 +37,7 @@ export const createLoadingThunk = async <T>(
     dispatch(setError(null));
     return result;
   } catch (error) {
-    dispatch(setError(error as string));
+    dispatch(setError(getErrorMessage(error)));
     return undefined;
   } finally {
     dispatch(setLoading(false));
@@ -44,7 +57,7 @@ export const createDataThunk = <T>(
   operation: () => Promise<T>,
   successAction?: (data: T) => PayloadAction<T>
 ) => {
-  return async (dispatch: any): Promise<T | undefined> => {
+  return async (dispatch: Dispatch<AnyAction>): Promise<T | undefined> => {
     dispatch(setLoading(true));
     try {
       const result = await operation();
@@ -54,7 +67,7 @@ export const createDataThunk = <T>(
       dispatch(setError(null));
       return result;
     } catch (error) {
-      dispatch(setError((error as Error).message || 'Operation failed'));
+      dispatch(setError(getErrorMessage(error)));
       return undefined;
     } finally {
       dispatch(setLoading(false));
