@@ -154,6 +154,7 @@ export const Colors = {
     purple: ['#8B5CF6', '#6D28D9'], // Mor Gradient
     sunset: ['#FF7B2E', '#E66929'], // Turuncu-Kırmızı Gradient
     ocean: ['#4A90E2', '#3B82F6'], // Mavi Gradient
+    blue: ['#4A90E2', '#3B82F6'], // Mavi Gradient (alias for ocean)
   },
 } as const;
 
