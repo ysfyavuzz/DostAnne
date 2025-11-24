@@ -3,7 +3,7 @@ import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeType = 'light' | 'dark' | 'auto';
-export type AccentColor = 'primary' | 'secondary' | 'blue' | 'purple' | 'pink';
+export type AccentColor = 'primary' | 'secondary' | 'blue' | 'purple' | 'pink' | 'green' | 'orange';
 
 export interface Theme {
   type: ThemeType;

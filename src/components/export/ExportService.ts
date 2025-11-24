@@ -1,5 +1,6 @@
 import React from 'react';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/build/legacy/FileSystem';
+import { EncodingType } from 'expo-file-system/build/legacy/FileSystem.types';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 
@@ -27,7 +28,7 @@ export class ExportService {
       
       // Write HTML content to file
       await FileSystem.writeAsStringAsync(fileUri, htmlContent, {
-        encoding: FileSystem.EncodingType.UTF8,
+        encoding: EncodingType.UTF8,
       });
       
       return fileUri;
@@ -59,7 +60,7 @@ export class ExportService {
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
       
       await FileSystem.writeAsStringAsync(fileUri, csvContent, {
-        encoding: FileSystem.EncodingType.UTF8,
+        encoding: EncodingType.UTF8,
       });
       
       return fileUri;
