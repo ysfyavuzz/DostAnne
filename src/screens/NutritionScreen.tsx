@@ -207,7 +207,7 @@ const recipes: Recipe[] = [
 ];
 
 export default function NutritionScreenNew() {
-  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { colors, spacing, borderRadius, typography, shadows, isDark } = useThemedStyles();
   const [selectedTab, setSelectedTab] = useState<'guides' | 'recipes'>('guides');
   const [expandedGuide, setExpandedGuide] = useState<string | null>(null);
   const [expandedRecipe, setExpandedRecipe] = useState<string | null>(null);

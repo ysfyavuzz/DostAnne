@@ -218,7 +218,7 @@ const AnimatedBottle = ({
 };
 
 export default function FeedingScreenNew() {
-  const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
+  const { colors, spacing, borderRadius, typography, shadows, isDark } = useThemedStyles();
   const { startFeedingSession, endFeedingSession } = useDatabase();
   const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
   const activities = useSelector((state: RootState) => state.database.activities);
