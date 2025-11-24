@@ -261,13 +261,13 @@ const SleepChart: React.FC<SleepChartProps> = ({
         </ScrollView>
       )}
 
-      {type !== 'quality' && 'legends' in chartData && chartData.legends && (
+      {type !== 'quality' && 'legends' in chartData && chartData.legends && Array.isArray(chartData.legends) && (
         <View style={styles.legendContainer}>
           {chartData.legends.map((legend: string, index: number) => (
             <View key={index} style={styles.legendItem}>
               <View style={[
                 styles.legendColor,
-                { backgroundColor: 'datasets' in chartData && chartData.datasets[index]?.color(1) || '#007AFF' }
+                { backgroundColor: 'datasets' in chartData && Array.isArray(chartData.datasets) && chartData.datasets[index]?.color(1) || '#007AFF' }
               ]} />
               <Text style={styles.legendText}>{legend}</Text>
             </View>
