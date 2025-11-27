@@ -124,7 +124,7 @@ class DatabaseService {
     try {
       this.db = await SQLite.openDatabaseAsync('dostanne.db');
       await this.createTables();
-      console.log('Database initialized successfully');
+      // Database initialized successfully
     } catch (error) {
       console.error('Database initialization failed:', error);
     }
