@@ -5,27 +5,32 @@ import { store } from '../src/store/store';
 import { useDatabase } from '../src/hooks/useDatabase';
 import { View, Text, ActivityIndicator } from 'react-native';
 
+import { AnimatedSplash } from '../src/components/AnimatedSplash';
+
 function AppContent() {
   const router = useRouter();
   const { currentBaby, loading, initializeData } = useDatabase();
   const [isReady, setIsReady] = React.useState(false);
+  const [splashFinished, setSplashFinished] = React.useState(false);
 
   useEffect(() => {
     initializeData();
   }, []);
 
   useEffect(() => {
-    if (!loading && !isReady) {
+    if (!loading && splashFinished && !isReady) {
       setIsReady(true);
-      setTimeout(() => {
-        if (currentBaby) {
-          router.replace('/(tabs)');
-        } else {
-          router.replace('/onboarding');
-        }
-      }, 100);
+      if (currentBaby) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/onboarding');
+      }
     }
-  }, [currentBaby, loading, isReady]);
+  }, [currentBaby, loading, isReady, splashFinished]);
+
+  if (!splashFinished) {
+    return <AnimatedSplash onFinish={() => setSplashFinished(true)} />;
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

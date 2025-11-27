@@ -16,6 +16,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useDatabase } from '../hooks/useDatabase';
 import { useNotifications } from '../hooks/useNotifications';
 
+import { Video, ResizeMode } from 'expo-av';
+
 interface BabyFormData {
   name: string;
   birthDate: string;
@@ -29,11 +31,11 @@ const OnboardingScreen: React.FC = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
   const { addBabyProfile, loading } = useDatabase();
-  const { 
-    scheduleFeeding, 
-    scheduleSleep, 
-    permissionGranted, 
-    initializeNotifications 
+  const {
+    scheduleFeeding,
+    scheduleSleep,
+    permissionGranted,
+    initializeNotifications
   } = useNotifications();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -85,7 +87,7 @@ const OnboardingScreen: React.FC = () => {
   ];
 
   const bloodTypes = [
-    'A Rh+', 'A Rh-', 'B Rh+', 'B Rh-', 
+    'A Rh+', 'A Rh-', 'B Rh+', 'B Rh-',
     'AB Rh+', 'AB Rh-', '0 Rh+', '0 Rh-', 'Bilmiyorum'
   ];
 
@@ -96,8 +98,8 @@ const OnboardingScreen: React.FC = () => {
       case 3:
         return babyData.birthDate.trim().length > 0;
       case 4:
-        return babyData.weight.trim().length > 0 && 
-               babyData.height.trim().length > 0;
+        return babyData.weight.trim().length > 0 &&
+          babyData.height.trim().length > 0;
       default:
         return true;
     }
@@ -119,7 +121,7 @@ const OnboardingScreen: React.FC = () => {
         .unwrap()
         .then(async () => {
           setCurrentStep(5);
-          
+
           // Try to schedule notifications with proper error handling
           try {
             if (permissionGranted) {
@@ -169,13 +171,20 @@ const OnboardingScreen: React.FC = () => {
 
   const renderStepContent = () => {
     const step = onboardingSteps.find(s => s.step === currentStep);
-    
+
     switch (currentStep) {
       case 1:
         return (
           <View style={styles.stepContent}>
             <View style={styles.welcomeContainer}>
-              <Ionicons name={step?.icon as any} size={80} color="#22C55E" />
+              <Video
+                source={require('../../assets/images/onboarding-video.mp4')}
+                style={styles.onboardingVideo}
+                resizeMode={ResizeMode.CONTAIN}
+                shouldPlay={true}
+                isLooping={true}
+                isMuted={true}
+              />
               <Text style={styles.welcomeTitle}>{step?.title}</Text>
               <Text style={styles.welcomeSubtitle}>{step?.subtitle}</Text>
               <Text style={styles.welcomeDescription}>{step?.description}</Text>
@@ -227,10 +236,10 @@ const OnboardingScreen: React.FC = () => {
                   ]}
                   onPress={() => handleGenderSelect('male')}
                 >
-                  <Ionicons 
-                    name="male" 
-                    size={24} 
-                    color={babyData.gender === 'male' ? 'white' : '#007AFF'} 
+                  <Ionicons
+                    name="male"
+                    size={24}
+                    color={babyData.gender === 'male' ? 'white' : '#007AFF'}
                   />
                   <Text style={[
                     styles.genderText,
@@ -246,10 +255,10 @@ const OnboardingScreen: React.FC = () => {
                   ]}
                   onPress={() => handleGenderSelect('female')}
                 >
-                  <Ionicons 
-                    name="female" 
-                    size={24} 
-                    color={babyData.gender === 'female' ? 'white' : '#FF3B30'} 
+                  <Ionicons
+                    name="female"
+                    size={24}
+                    color={babyData.gender === 'female' ? 'white' : '#FF3B30'}
                   />
                   <Text style={[
                     styles.genderText,
@@ -326,7 +335,7 @@ const OnboardingScreen: React.FC = () => {
               <Text style={styles.completionTitle}>{step?.title}</Text>
               <Text style={styles.completionSubtitle}>{step?.subtitle}</Text>
               <Text style={styles.completionDescription}>{step?.description}</Text>
-              
+
               <View style={styles.babySummary}>
                 <Text style={styles.summaryTitle}>Bebeğinizin Profili:</Text>
                 <Text style={styles.summaryItem}>👶 {babyData.name}</Text>
@@ -350,15 +359,15 @@ const OnboardingScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      
+
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
-          <View 
+          <View
             style={[
-              styles.progressFill, 
+              styles.progressFill,
               { width: `${(currentStep / 5) * 100}%` }
-            ]} 
+            ]}
           />
         </View>
         <Text style={styles.progressText}>{currentStep}/5</Text>
@@ -470,6 +479,11 @@ const styles = StyleSheet.create({
   welcomeContainer: {
     alignItems: 'center',
     paddingVertical: 40,
+  },
+  onboardingVideo: {
+    width: 300,
+    height: 300,
+    marginBottom: 20,
   },
   welcomeTitle: {
     fontSize: 28,
