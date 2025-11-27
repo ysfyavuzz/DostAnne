@@ -8,6 +8,8 @@ import {
   Dimensions,
   RefreshControl,
   Animated,
+  Image,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +18,8 @@ import { RootState } from '../store/store';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { AppHeader } from '../components/ui/AppHeader';
+import { GlassView } from '../components/ui/GlassView';
+import { ThemedButton } from '../components/ui/ThemedButton';
 
 const { width } = Dimensions.get('window');
 
@@ -29,16 +32,17 @@ interface QuickAction {
   gradient: string[];
 }
 
-const HomeScreenNew = () => {
+const HomeScreen = () => {
   const router = useRouter();
   const { colors, typography, spacing, borderRadius, shadows, isDark } = useThemedStyles();
-  
+
   const currentBaby = useSelector((state: RootState) => state.database.currentBaby);
   const activities = useSelector((state: RootState) => state.activities.activities);
-  
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [scrollY] = useState(new Animated.Value(0));
 
   // Update time every minute
   useEffect(() => {
@@ -51,7 +55,7 @@ const HomeScreenNew = () => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
-    
+
     return () => clearInterval(timer);
   }, []);
 
@@ -63,6 +67,15 @@ const HomeScreenNew = () => {
     return 'İyi Akşamlar';
   }, [currentTime]);
 
+  // Dynamic Background Gradient
+  const backgroundGradient = useMemo(() => {
+    const hour = currentTime.getHours();
+    if (hour < 6 || hour > 20) return colors.gradients.ocean; // Night
+    if (hour < 10) return colors.gradients.aurora; // Morning
+    if (hour < 17) return colors.gradients.primary; // Day
+    return colors.gradients.sunset; // Evening
+  }, [currentTime, colors]);
+
   // Calculate baby age
   const babyAge = useMemo(() => {
     if (!currentBaby) return '';
@@ -70,7 +83,7 @@ const HomeScreenNew = () => {
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - birthDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 30) return `${diffDays} günlük`;
     const months = Math.floor(diffDays / 30);
     const days = diffDays % 30;
@@ -107,37 +120,37 @@ const HomeScreenNew = () => {
 
   // Quick actions with proper routing
   const quickActions: QuickAction[] = useMemo(() => [
-    { 
-      id: 'feeding', 
-      icon: 'restaurant', 
-      label: 'Emzirme', 
+    {
+      id: 'feeding',
+      icon: 'restaurant',
+      label: 'Emzirme',
       color: colors.activity.feeding,
       route: '/(tabs)/feeding',
-      gradient: colors.gradients.primary,
+      gradient: colors.gradients.feeding,
     },
-    { 
-      id: 'sleep', 
-      icon: 'moon', 
-      label: 'Uyku', 
+    {
+      id: 'sleep',
+      icon: 'moon',
+      label: 'Uyku',
       color: colors.activity.sleep,
       route: '/(tabs)/sleep',
-      gradient: colors.gradients.purple,
+      gradient: colors.gradients.sleep,
     },
-    { 
-      id: 'diaper', 
-      icon: 'water', 
-      label: 'Bez', 
+    {
+      id: 'diaper',
+      icon: 'water',
+      label: 'Bez',
       color: colors.activity.diaper,
       route: '/(tabs)/activities',
-      gradient: colors.gradients.success,
+      gradient: colors.gradients.diaper,
     },
-    { 
-      id: 'health', 
-      icon: 'medical', 
-      label: 'Sağlık', 
+    {
+      id: 'health',
+      icon: 'medical',
+      label: 'Sağlık',
       color: colors.activity.health,
       route: '/(tabs)/health',
-      gradient: colors.gradients.sunset,
+      gradient: colors.gradients.danger,
     },
   ], [colors]);
 
@@ -147,324 +160,409 @@ const HomeScreenNew = () => {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // Simulate refresh
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
   }, []);
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('tr-TR', { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-
   const styles = createStyles(colors, typography, spacing, borderRadius, shadows, isDark);
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <AppHeader title="Ana Sayfa" />
-      <ScrollView 
-        style={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-      {/* Header Section */}
+  const renderHeader = () => (
+    <Animated.View style={[styles.headerContainer, { opacity: fadeAnim }]}>
+      <GlassView style={styles.headerGlass} intensity={20} borderless>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Image
+              source={require('../../assets/images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <View>
+              <Text style={styles.greeting}>{greeting},</Text>
+              <Text style={styles.parentName}>Sevgili Anne</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/(tabs)/profile')}>
+            <LinearGradient
+              colors={colors.gradients.primary as any}
+              style={styles.profileGradient}
+            >
+              <Text style={styles.profileInitial}>A</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </GlassView>
+    </Animated.View>
+  );
+
+  const renderBabyCard = () => (
+    <View style={styles.babyCardContainer}>
       <LinearGradient
-        colors={colors.gradients.primary}
+        colors={backgroundGradient as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.header}
+        style={styles.babyCardGradient}
       >
-        <Animated.View style={{ opacity: fadeAnim }}>
-          <Text style={styles.greeting}>
-            {greeting} 👋
-          </Text>
-          {currentBaby && (
-            <>
-              <Text style={styles.babyName}>{currentBaby.name}</Text>
-              <Text style={styles.babyAge}>{babyAge}</Text>
-            </>
-          )}
-          <View style={styles.dateTimeContainer}>
-            <Text style={styles.time}>{formatTime(currentTime)}</Text>
-            <Text style={styles.date}>{formatDate(currentTime)}</Text>
+        <View style={styles.babyInfo}>
+          <View>
+            <Text style={styles.babyName}>{currentBaby?.name || 'Bebeğim'}</Text>
+            <Text style={styles.babyAge}>{babyAge}</Text>
           </View>
-        </Animated.View>
-      </LinearGradient>
-
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
-        <View style={styles.quickActionsGrid}>
-          {quickActions.map((action) => (
-            <TouchableOpacity
-              key={action.id}
-              style={styles.quickActionCard}
-              onPress={() => handleQuickAction(action.route)}
-              activeOpacity={0.7}
-            >
-              <LinearGradient
-                colors={action.gradient as unknown as readonly [string, string, ...string[]]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.quickActionGradient}
-              >
-                <View style={styles.quickActionIcon}>
-                  <Ionicons name={action.icon} size={28} color="white" />
-                </View>
-                <Text style={styles.quickActionLabel}>{action.label}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
+          <View style={styles.babyIconContainer}>
+            <Ionicons name="happy" size={32} color="white" />
+          </View>
         </View>
-      </View>
 
-      {/* Today's Summary */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Bugünün Özeti</Text>
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryItem}>
-              <View style={[styles.summaryIcon, { backgroundColor: colors.activity.sleep + '20' }]}>
-                <Ionicons name="moon" size={24} color={colors.activity.sleep} />
+        {/* Gamification Widget: Level Progress */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.levelText}>Seviye 3: Keşifçi</Text>
+            <Text style={styles.xpText}>340/500 XP</Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: '68%' }]} />
+          </View>
+          <Text style={styles.nextMilestone}>Sonraki: İlk Gülümseme 🌟</Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* Background Decor */}
+      <LinearGradient
+        colors={[colors.background.soft, colors.background.light] as any}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.decorCircle1} />
+      <View style={styles.decorCircle2} />
+
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {renderHeader()}
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary[500]} />
+          }
+        >
+          {renderBabyCard()}
+
+          {/* Quick Actions Grid */}
+          <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
+          <View style={styles.quickActionsGrid}>
+            {quickActions.map((action) => (
+              <TouchableOpacity
+                key={action.id}
+                style={styles.quickActionCard}
+                onPress={() => handleQuickAction(action.route)}
+                activeOpacity={0.7}
+              >
+                <GlassView style={styles.quickActionGlass} intensity={40}>
+                  <LinearGradient
+                    colors={action.gradient as any}
+                    style={styles.iconCircle}
+                  >
+                    <Ionicons name={action.icon} size={24} color="white" />
+                  </LinearGradient>
+                  <Text style={styles.quickActionLabel}>{action.label}</Text>
+                </GlassView>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Today's Summary */}
+          <Text style={styles.sectionTitle}>Bugünün Özeti</Text>
+          <GlassView style={styles.summaryCard} intensity={30}>
+            <View style={styles.summaryRow}>
+              <View style={styles.summaryItem}>
+                <Text style={[styles.summaryValue, { color: colors.activity.sleep }]}>
+                  {todaySummary.sleepHours}s {todaySummary.sleepMinutes}d
+                </Text>
+                <Text style={styles.summaryLabel}>Uyku</Text>
               </View>
-              <Text style={styles.summaryLabel}>Uyku</Text>
-              <Text style={styles.summaryValue}>
-                {todaySummary.sleepHours}s {todaySummary.sleepMinutes}d
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryItem}>
+                <Text style={[styles.summaryValue, { color: colors.activity.feeding }]}>
+                  {todaySummary.feedingCount}
+                </Text>
+                <Text style={styles.summaryLabel}>Emzirme</Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryItem}>
+                <Text style={[styles.summaryValue, { color: colors.activity.diaper }]}>
+                  {todaySummary.diaperCount}
+                </Text>
+                <Text style={styles.summaryLabel}>Bez</Text>
+              </View>
+            </View>
+          </GlassView>
+
+          {/* Daily Tip */}
+          <Text style={styles.sectionTitle}>Günün İpucu 💡</Text>
+          <GlassView style={styles.tipCard} intensity={30}>
+            <LinearGradient
+              colors={colors.gradients.dream as any}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.tipBorder}
+            />
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Uyku Rutini</Text>
+              <Text style={styles.tipText}>
+                Bebeğinizi her gün aynı saatte yatırmak, biyolojik saatini düzenlemeye yardımcı olur. Ilık bir banyo harika bir başlangıçtır!
               </Text>
             </View>
+          </GlassView>
 
-            <View style={styles.summaryDivider} />
-
-            <View style={styles.summaryItem}>
-              <View style={[styles.summaryIcon, { backgroundColor: colors.activity.feeding + '20' }]}>
-                <Ionicons name="restaurant" size={24} color={colors.activity.feeding} />
-              </View>
-              <Text style={styles.summaryLabel}>Emzirme</Text>
-              <Text style={styles.summaryValue}>{todaySummary.feedingCount} kez</Text>
-            </View>
-
-            <View style={styles.summaryDivider} />
-
-            <View style={styles.summaryItem}>
-              <View style={[styles.summaryIcon, { backgroundColor: colors.activity.diaper + '20' }]}>
-                <Ionicons name="water" size={24} color={colors.activity.diaper} />
-              </View>
-              <Text style={styles.summaryLabel}>Bez</Text>
-              <Text style={styles.summaryValue}>{todaySummary.diaperCount} kez</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* More Features */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Daha Fazla</Text>
-        <View style={styles.featuresList}>
-          <TouchableOpacity 
-            style={styles.featureItem}
-            onPress={() => router.push('/(tabs)/statistics')}
-          >
-            <View style={[styles.featureIcon, { backgroundColor: colors.secondary[100] }]}>
-              <Ionicons name="bar-chart" size={24} color={colors.secondary[600]} />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>İstatistikler</Text>
-              <Text style={styles.featureDescription}>Detaylı analizler ve grafikler</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.featureItem}
-            onPress={() => router.push('/(tabs)/development')}
-          >
-            <View style={[styles.featureIcon, { backgroundColor: colors.success[100] }]}>
-              <Ionicons name="trending-up" size={24} color={colors.success[600]} />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>Gelişim</Text>
-              <Text style={styles.featureDescription}>Bebeğinizin gelişim takibi</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.featureItem}
-            onPress={() => router.push('/(tabs)/calendar')}
-          >
-            <View style={[styles.featureIcon, { backgroundColor: colors.warning[100] }]}>
-              <Ionicons name="calendar" size={24} color={colors.warning[600]} />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>Takvim & Planlayıcı</Text>
-              <Text style={styles.featureDescription}>Randevular ve rutinler</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={{ height: spacing['4xl'] }} />
-    </ScrollView>
-    </SafeAreaView>
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const createStyles = (colors: any, typography: any, spacing: any, borderRadius: any, shadows: any, isDark: boolean) => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: isDark ? colors.background.dark : colors.background.light,
-  },
   container: {
     flex: 1,
+    backgroundColor: colors.background.light,
   },
-  header: {
-    padding: spacing['2xl'],
-    paddingTop: spacing['6xl'],
-    borderBottomLeftRadius: borderRadius['3xl'],
-    borderBottomRightRadius: borderRadius['3xl'],
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: spacing.lg,
+  },
+  decorCircle1: {
+    position: 'absolute',
+    top: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: colors.primary[100],
+    opacity: 0.5,
+  },
+  decorCircle2: {
+    position: 'absolute',
+    top: 200,
+    left: -150,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: colors.secondary[100],
+    opacity: 0.4,
+  },
+  headerContainer: {
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  headerGlass: {
+    borderRadius: borderRadius['2xl'],
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  logoImage: {
+    width: 48,
+    height: 48,
   },
   greeting: {
-    ...typography.h2,
+    ...typography.body,
+    color: colors.text.secondary,
+  },
+  parentName: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  profileButton: {
+    ...shadows.sm,
+  },
+  profileGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileInitial: {
+    ...typography.h4,
     color: 'white',
-    marginBottom: spacing.sm,
+  },
+  babyCardContainer: {
+    marginBottom: spacing['2xl'],
+    ...shadows.lg,
+  },
+  babyCardGradient: {
+    borderRadius: borderRadius['3xl'],
+    padding: spacing.xl,
+  },
+  babyInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
   },
   babyName: {
-    ...typography.h3,
+    ...typography.h2,
     color: 'white',
     marginBottom: spacing.xs,
   },
   babyAge: {
     ...typography.body,
     color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: spacing.lg,
   },
-  dateTimeContainer: {
-    marginTop: spacing.md,
+  babyIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  time: {
-    ...typography.h4,
+  progressContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  levelText: {
+    ...typography.caption,
     color: 'white',
+    fontWeight: '700',
   },
-  date: {
-    ...typography.bodySmall,
+  xpText: {
+    ...typography.caption,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 3,
+    marginBottom: spacing.xs,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: 'white',
+    borderRadius: 3,
+  },
+  nextMilestone: {
+    ...typography.captionSmall,
     color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: spacing.xs,
-  },
-  section: {
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing['2xl'],
+    textAlign: 'right',
   },
   sectionTitle: {
     ...typography.h4,
-    color: isDark ? colors.text.primary : colors.neutral[900],
-    marginBottom: spacing.lg,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
+    marginLeft: spacing.xs,
   },
   quickActionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.md,
+    marginBottom: spacing['2xl'],
   },
   quickActionCard: {
     width: (width - spacing.lg * 2 - spacing.md) / 2,
+    height: 110,
     borderRadius: borderRadius.xl,
-    overflow: 'hidden',
-    ...shadows.md,
+    ...shadows.sm,
   },
-  quickActionGradient: {
-    padding: spacing.xl,
+  quickActionGlass: {
+    flex: 1,
+    padding: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 120,
-  },
-  quickActionIcon: {
-    marginBottom: spacing.md,
-  },
-  quickActionLabel: {
-    ...typography.labelLarge,
-    color: 'white',
-    fontWeight: '600',
-  },
-  summaryCard: {
-    backgroundColor: isDark ? colors.background.cardDark : 'white',
     borderRadius: borderRadius.xl,
-    padding: spacing.xl,
-    ...shadows.md,
+    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
   },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  summaryItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  summaryIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: borderRadius.full,
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
+    ...shadows.md,
+  },
+  quickActionLabel: {
+    ...typography.label,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  summaryCard: {
+    padding: spacing.lg,
+    borderRadius: borderRadius.xl,
+    marginBottom: spacing['2xl'],
+    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryValue: {
+    ...typography.h4,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
   },
   summaryLabel: {
     ...typography.caption,
     color: colors.text.secondary,
-    marginBottom: spacing.xs,
-  },
-  summaryValue: {
-    ...typography.h5,
-    color: isDark ? colors.text.primary : colors.neutral[900],
-    fontWeight: '700',
   },
   summaryDivider: {
     width: 1,
-    height: 60,
+    height: 40,
     backgroundColor: colors.neutral[200],
-    marginHorizontal: spacing.sm,
   },
-  featuresList: {
-    gap: spacing.md,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: isDark ? colors.background.cardDark : 'white',
-    padding: spacing.lg,
+  tipCard: {
     borderRadius: borderRadius.xl,
-    ...shadows.sm,
+    overflow: 'hidden',
+    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
   },
-  featureIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
+  tipBorder: {
+    height: 4,
+    width: '100%',
   },
-  featureContent: {
-    flex: 1,
+  tipContent: {
+    padding: spacing.lg,
   },
-  featureTitle: {
-    ...typography.labelLarge,
-    color: isDark ? colors.text.primary : colors.neutral[900],
+  tipTitle: {
+    ...typography.h5,
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
-  featureDescription: {
+  tipText: {
     ...typography.bodySmall,
     color: colors.text.secondary,
+    lineHeight: 20,
   },
 });
 
-export default React.memo(HomeScreenNew);
+export default React.memo(HomeScreen);

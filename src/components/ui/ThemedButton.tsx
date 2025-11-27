@@ -1,15 +1,10 @@
-/**
- * Themed Button Component
- * Multiple variants with consistent styling
- */
-
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import React, { useRef } from 'react';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, Animated, Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text' | 'success' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text' | 'success' | 'danger' | 'glass';
 type ButtonSize = 'small' | 'medium' | 'large';
 
 interface ThemedButtonProps {
@@ -38,28 +33,46 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
   style,
 }) => {
   const { colors, typography, spacing, borderRadius, shadows } = useThemedStyles();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const isGradientVariant = variant === 'primary' || variant === 'success' || variant === 'danger';
   const isDisabled = disabled || loading;
 
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      speed: 20,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+    }).start();
+  };
+
   const getGradientColors = () => {
     switch (variant) {
       case 'primary':
-        return colors.gradients.primary as any;
+        return colors.gradients.primary;
       case 'success':
-        return colors.gradients.success as any;
+        return colors.gradients.success;
       case 'danger':
-        return [colors.error[400], colors.error[600]] as any;
+        return colors.gradients.danger;
       default:
-        return colors.gradients.primary as any;
+        return colors.gradients.primary;
     }
   };
 
   const getTextColor = () => {
     if (isDisabled) return colors.text.disabled;
-    if (variant === 'text') return colors.primary[500];
-    if (variant === 'outline') return colors.primary[500];
+    if (variant === 'text') return colors.text.primary;
+    if (variant === 'outline') return colors.text.primary;
     if (variant === 'secondary') return colors.text.primary;
+    if (variant === 'glass') return colors.text.primary;
     return 'white';
   };
 
@@ -91,35 +104,41 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
     </>
   );
 
-  if (isGradientVariant && !isDisabled) {
-    return (
-      <TouchableOpacity
+  const ButtonContainer = ({ children }: { children: React.ReactNode }) => (
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, fullWidth && { width: '100%' }]}>
+      <Pressable
         onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={isDisabled}
-        activeOpacity={0.8}
         style={[styles.buttonWrapper, style]}
       >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+
+  if (isGradientVariant && !isDisabled) {
+    return (
+      <ButtonContainer>
         <LinearGradient
-          colors={getGradientColors()}
+          colors={getGradientColors() as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.button}
         >
           {content}
         </LinearGradient>
-      </TouchableOpacity>
+      </ButtonContainer>
     );
   }
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={isDisabled}
-      activeOpacity={0.7}
-      style={[styles.buttonWrapper, styles.button, style]}
-    >
-      {content}
-    </TouchableOpacity>
+    <ButtonContainer>
+      <View style={[styles.button, style]}>
+        {content}
+      </View>
+    </ButtonContainer>
   );
 };
 
@@ -138,6 +157,8 @@ const createStyles = (
     borderRadius: borderRadius.xl,
     overflow: 'hidden',
     alignSelf: fullWidth ? 'stretch' : 'flex-start',
+    width: fullWidth ? '100%' : 'auto',
+    ...(!disabled && variant !== 'text' && variant !== 'glass' && shadows.md),
   },
   button: {
     flexDirection: 'row',
@@ -152,15 +173,20 @@ const createStyles = (
       backgroundColor: 'transparent',
     }),
     ...(variant === 'secondary' && {
-      backgroundColor: disabled ? colors.neutral[200] : colors.neutral[100],
+      backgroundColor: disabled ? colors.neutral[200] : colors.secondary[100],
     }),
     ...(variant === 'text' && {
       backgroundColor: 'transparent',
+      paddingHorizontal: spacing.sm,
+    }),
+    ...(variant === 'glass' && {
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.3)',
     }),
     ...(disabled && variant !== 'outline' && variant !== 'text' && {
       backgroundColor: colors.neutral[200],
     }),
-    ...(!disabled && variant !== 'text' && shadows.sm),
   },
   text: {
     ...(size === 'small' ? typography.buttonSmall : size === 'large' ? typography.buttonLarge : typography.button),
