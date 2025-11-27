@@ -8,9 +8,6 @@ This document describes the organized file and folder structure of the DostAnne 
 DostAnne/
 ├── app/                    # Expo Router screens (app entry points)
 ├── src/                    # Core application code
-├── components/             # Reusable UI primitives (Expo template)
-├── hooks/                  # Root-level React hooks
-├── constants/              # Root-level constants
 ├── assets/                 # Static assets (images, guides)
 ├── docs/                   # All project documentation
 ├── __tests__/              # Test files
@@ -44,7 +41,6 @@ app/
 │   ├── sleep.tsx           # Sleep tab
 │   └── statistics.tsx      # Statistics tab
 ├── _layout.tsx             # Root layout
-├── modal.tsx               # Modal screen
 └── onboarding.tsx          # Onboarding screen
 ```
 
@@ -57,6 +53,7 @@ Contains all core application logic and components.
 ### `/src/screens`
 
 Main screen implementations:
+
 - `ActivitiesScreen.tsx` - Activities tracking
 - `AstronomyScreen.tsx` - Moon cycle tracking
 - `BiologicalDevelopmentScreen.tsx` - Biological development tracking
@@ -116,8 +113,7 @@ src/components/
 ├── GrowthChart.tsx         # Growth tracking chart
 ├── OneHandedMode.tsx       # One-handed mode UI
 ├── SleepChart.tsx          # Sleep pattern chart
-├── ThemedText.tsx          # Re-export wrapper
-└── ThemedView.tsx          # Re-export wrapper
+└── OneHandedMode.tsx       # One-handed mode UI
 ```
 
 ### Other `/src` directories
@@ -130,26 +126,6 @@ src/components/
 - `/src/data/` - Static data files (developmentData, firstAidData, biologicalDevelopmentData)
 - `/src/utils/` - Utility functions (ErrorHandler)
 - `/src/assets/` - App-specific assets
-
-## 🎨 Components Directory (`/components`)
-
-Root-level reusable UI primitives from Expo template:
-
-- `themed-text.tsx` - Themed text component
-- `themed-view.tsx` - Themed view component
-- `hello-wave.tsx` - Animated wave component
-- `haptic-tab.tsx` - Haptic feedback tab
-- `external-link.tsx` - External link handler
-- `parallax-scroll-view.tsx` - Parallax scroll view
-- `ui/` - UI utilities (icon-symbol, collapsible)
-
-## 🪝 Hooks Directory (`/hooks`)
-
-Root-level hooks:
-
-- `use-color-scheme.ts` - Color scheme detection
-- `use-color-scheme.web.ts` - Web-specific color scheme
-- `use-theme-color.ts` - Theme color management
 
 ## 📚 Documentation (`/docs`)
 
@@ -178,7 +154,6 @@ Root-level configuration files:
 - `eslint.config.js` - ESLint rules
 - `app.json` - Expo app configuration
 - `.gitignore` - Git ignore rules
-- `.prettierrc` - Prettier formatting rules
 - `.env.example` - Environment variables example
 
 ## 🧪 Testing
@@ -200,20 +175,24 @@ Root-level configuration files:
 ## 🏗️ Architecture Patterns
 
 ### Navigation Pattern
+
 - **Expo Router**: File-based routing in `/app` directory
 - **Tab Navigation**: Main navigation via `(tabs)` folder
 - **Screen Wrappers**: Thin wrappers in `/app` import implementations from `/src/screens`
 
 ### Component Organization
+
 1. **Root Components** (`/components`): Generic, reusable UI primitives
 2. **App Components** (`/src/components`): Feature-specific components
 3. **Screen Components** (`/src/screens`): Full screen implementations
 
 ### State Management
+
 - **Redux Toolkit**: Global state management (`/src/store`)
 - **Custom Hooks**: Encapsulated logic (`/src/hooks`, `/hooks`)
 
 ### Data Layer
+
 - **SQLite**: Local database (`/src/database`)
 - **Static Data**: Pre-defined data sets (`/src/data`)
 - **Services**: Business logic layer (`/src/services`)

@@ -269,7 +269,6 @@ DostAnne/
 │   ├── store/              # Redux state yönetimi
 │   ├── services/           # İş mantığı servisleri
 │   └── ...                 # Diğer modüller
-├── components/             # UI temel bileşenler
 ├── assets/                 # Statik dosyalar (görseller, rehberler)
 ├── docs/                   # Tüm dokümantasyon
 └── __tests__/              # Test dosyaları
