@@ -1,16 +1,15 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Dimensions,
   Animated,
-  ActivityIndicator,
+  Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
+  Text,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemedStyles } from '@/src/hooks/useThemedStyles';
-import { Text } from 'react-native';
 
 const ThemedText = Text;
 const { width: screenWidth } = Dimensions.get('window');

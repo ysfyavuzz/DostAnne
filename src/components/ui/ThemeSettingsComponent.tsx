@@ -1,16 +1,15 @@
+```javascript
 import React from 'react';
 import {
   View,
-  Text,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  Switch,
+  Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, ThemeType, AccentColor } from '@/src/hooks/useTheme';
-import { Text } from 'react-native';
 
 const ThemedText = Text;
 
@@ -49,7 +48,7 @@ export default function ThemeSettingsComponent({
     {
       type: 'auto',
       label: 'Otomatik',
-      description: `Sistem ayarını takip eder (${isSystemDark ? 'Koyu' : 'Açık'})`,
+      description: `Sistem ayarını takip eder(${ isSystemDark? 'Koyu': 'Açık' })`,
       icon: 'settings-outline',
     },
   ];
