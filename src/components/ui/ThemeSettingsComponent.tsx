@@ -10,9 +10,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, ThemeType, AccentColor } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
+import { Text } from 'react-native';
 
-const ThemedText = createText();
+const ThemedText = Text;
 
 interface ThemeSettingsComponentProps {
   visible: boolean;

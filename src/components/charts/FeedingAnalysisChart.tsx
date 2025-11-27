@@ -13,9 +13,9 @@ import {
   PieChart,
 } from 'react-native-chart-kit';
 import { useTheme } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
 
-const ThemedText = createText();
+
+const ThemedText = Text;
 const { width: screenWidth } = Dimensions.get('window');
 
 interface FeedingData {

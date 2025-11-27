@@ -11,11 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
+
 import { ExportService, ExportData, prepareFeedingData, prepareHealthData, prepareSleepData } from './ExportService';
 import { LoadingOverlay } from '../ui/LoadingComponents';
 
-const ThemedText = createText();
+const ThemedText = Text;
 
 interface ExportComponentProps {
   visible: boolean;

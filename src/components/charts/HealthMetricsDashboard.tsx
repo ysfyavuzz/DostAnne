@@ -14,10 +14,10 @@ import {
   ProgressChart,
 } from 'react-native-chart-kit';
 import { useTheme } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
+
 import { Ionicons } from '@expo/vector-icons';
 
-const ThemedText = createText();
+const ThemedText = Text;
 const { width: screenWidth } = Dimensions.get('window');
 
 interface HealthMetric {

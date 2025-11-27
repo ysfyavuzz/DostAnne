@@ -5,12 +5,12 @@ import {
   Dimensions,
   TouchableOpacity,
   RefreshControl,
+  Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
-import { 
+import {
   DashboardGrid,
   QuickStatsWidget,
   GrowthChartWidget,
@@ -19,7 +19,7 @@ import {
   MemoryWidget,
 } from '@/src/components/advanced/WidgetSystem';
 
-const ThemedText = createText();
+const ThemedText = Text;
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function HomeScreenWidgets() {
@@ -64,7 +64,7 @@ export default function HomeScreenWidgets() {
         date: '2 ay önce',
       },
     };
-    
+
     setWidgetData(mockData);
   };
 
@@ -88,11 +88,11 @@ export default function HomeScreenWidgets() {
         <View>
           <ThemedText style={styles.welcomeText}>Hoş Geldiniz! 👋</ThemedText>
           <ThemedText style={styles.dateText}>
-            {new Date().toLocaleDateString('tr-TR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {new Date().toLocaleDateString('tr-TR', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </ThemedText>
         </View>
@@ -101,8 +101,8 @@ export default function HomeScreenWidgets() {
         </TouchableOpacity>
       </View>
 
-      <DashboardGrid 
-        widgets={widgets} 
+      <DashboardGrid
+        widgets={widgets}
         editable={true}
       />
     </SafeAreaView>

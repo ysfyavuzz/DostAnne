@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemedStyles } from '@/src/hooks/useThemedStyles';
-import { createText } from '@/src/components/ThemedText';
+import { Text } from 'react-native';
 
-const ThemedText = createText();
+const ThemedText = Text;
 const { width: screenWidth } = Dimensions.get('window');
 
 interface ShimmerProps {

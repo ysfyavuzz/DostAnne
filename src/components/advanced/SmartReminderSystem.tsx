@@ -12,11 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
+
 import { useNotifications } from '@/src/hooks/useNotifications';
 import { notificationService } from '@/src/services/NotificationService';
 
-const ThemedText = createText();
+const ThemedText = Text;
 
 interface SmartReminder {
   id: string;

@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
+
 import { 
   AIRecommendationService, 
   Recommendation, 
@@ -19,7 +19,7 @@ import {
 } from './AIRecommendations';
 import { LoadingOverlay } from '../ui/LoadingComponents';
 
-const ThemedText = createText();
+const ThemedText = Text;
 const { width: screenWidth } = Dimensions.get('window');
 
 interface AIRecommendationComponentProps {

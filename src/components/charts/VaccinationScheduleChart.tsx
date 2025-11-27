@@ -12,11 +12,11 @@ import {
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useTheme } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
+
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-const ThemedText = createText();
+const ThemedText = Text;
 const { width: screenWidth } = Dimensions.get('window');
 
 interface VaccinationScheduleItem {

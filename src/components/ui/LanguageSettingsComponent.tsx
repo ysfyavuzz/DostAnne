@@ -1,18 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  Text,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
+  Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/src/hooks/useTheme';
-import { createText } from '@/src/components/ThemedText';
 import { useTranslation, Language } from '@/src/hooks/useTranslation';
 
-const ThemedText = createText();
+const ThemedText = Text;
 
 interface LanguageSettingsComponentProps {
   visible: boolean;
