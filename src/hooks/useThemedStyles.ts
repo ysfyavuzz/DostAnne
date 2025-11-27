@@ -9,18 +9,59 @@ import { Spacing, BorderRadius, Shadows } from '../constants/Spacing';
 import { useMemo } from 'react';
 import { useTheme } from './useTheme'; // Yeni useTheme hook'unu import et
 
+// Type definitions for the merged colors object
+// We define this manually to allow string overrides for literal types defined in Colors
+export type ThemeColors = {
+  primary: string | typeof Colors.primary;
+  secondary: string | typeof Colors.secondary;
+  border: string;
+  success: string | typeof Colors.success;
+  warning: string | typeof Colors.warning;
+  error: string | typeof Colors.error;
+  info: string;
+  tabBar: string;
+  tabBarActive: string;
+  header: string;
+  textSecondary: string;
+  // Use intersection to keep nested properties while allowing string override
+  text: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    inverse: string;
+    disabled: string;
+    toString: () => string;
+    valueOf: () => string;
+    _flat: string;
+  };
+  background: {
+    light: string;
+    dark: string;
+    card: string;
+    cardDark: string;
+    soft: string;
+    softDark: string;
+    glass: string;
+    glassDark: string;
+    toString: () => string;
+    valueOf: () => string;
+    _flat: string;
+  };
+  card: string;
+} & Omit<typeof Colors, 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'text' | 'background'>;
+
 export const useThemedStyles = () => {
-  const { colors: themeColors, isDark, theme } = useTheme(); // useTheme'dan dinamik renkleri al
+  const { colors: themeColors, isDark, theme } = useTheme();
   const systemColorScheme = useColorScheme();
 
-  // useTheme'dan gelen dinamik renkleri ve statik sabitleri birleştir
   const colors = useMemo(() => {
     const baseColors = isDark ? DarkColors : Colors;
-    
+
     // Create a merged object with both flat and nested properties
+    // We cast to any here because we are overriding some object properties (like primary) with strings
+    // which causes type conflicts with the base Colors type
     const merged: any = {
-      ...baseColors, // Full color palette with nested structures
-      // Override specific flat properties from theme
+      ...baseColors,
       primary: themeColors.primary,
       secondary: themeColors.secondary,
       border: themeColors.border,
@@ -33,38 +74,33 @@ export const useThemedStyles = () => {
       header: themeColors.header,
       textSecondary: themeColors.textSecondary,
     };
-    
+
     // Add hybrid properties that need both flat and nested access
     // Using Object.assign to add toString to the object for string coercion
-    merged.text = Object.assign(
+    const textWithToString = Object.assign(
       {
+        ...baseColors.text,
         primary: themeColors.text,
         secondary: themeColors.textSecondary,
-        tertiary: baseColors.text.tertiary,
-        inverse: baseColors.text.inverse,
-        disabled: baseColors.text.disabled,
         toString: () => themeColors.text,
         valueOf: () => themeColors.text,
       },
       { _flat: themeColors.text }
     );
-    
-    merged.background = Object.assign(
+
+    const backgroundWithToString = Object.assign(
       {
-        light: baseColors.background.light,
-        dark: baseColors.background.dark,
-        card: baseColors.background.card,
-        cardDark: baseColors.background.cardDark,
-        soft: baseColors.background.soft,
-        softDark: baseColors.background.softDark,
+        ...baseColors.background,
         toString: () => themeColors.background,
         valueOf: () => themeColors.background,
       },
       { _flat: themeColors.background }
     );
-    
+
+    merged.text = textWithToString;
+    merged.background = backgroundWithToString;
     merged.card = themeColors.card;
-    
+
     return merged;
   }, [themeColors, isDark]);
 
@@ -79,5 +115,5 @@ export const useThemedStyles = () => {
   };
 };
 
-// Type-safe theme context
 export type ThemedStyles = ReturnType<typeof useThemedStyles>;
+

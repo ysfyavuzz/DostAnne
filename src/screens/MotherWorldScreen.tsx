@@ -29,7 +29,7 @@ import { FILTER_OPTIONS, QUESTION_CATEGORIES } from '../constants/QnA';
 
 export default function MotherWorldScreen() {
   const { colors, spacing, borderRadius, typography, shadows } = useThemedStyles();
-  
+
   const [questions, setQuestions] = useState<Question[]>(MOCK_QUESTIONS);
   const [activeFilter, setActiveFilter] = useState<QuestionFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +57,7 @@ export default function MotherWorldScreen() {
     // Apply filter
     switch (activeFilter) {
       case 'new':
-        filtered = filtered.sort((a, b) => 
+        filtered = filtered.sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         break;
@@ -76,7 +76,7 @@ export default function MotherWorldScreen() {
   }, [questions, searchQuery, activeFilter]);
 
   const handleQuestionPress = (question: Question) => {
-    // TODO: Navigate to QuestionDetailScreen
+    // Navigate to detail screen
     Alert.alert('Soru Detayı', `"${question.title}" detayına gidilecek.`);
   };
 

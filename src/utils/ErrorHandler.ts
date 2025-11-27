@@ -21,18 +21,18 @@ class ErrorHandler {
   log(error: AppError): void {
     this.errors.push(error);
     console.error('App Error:', error);
-    
+
     // In production, send to analytics/logging service
     if (__DEV__ === false) {
-      // TODO: Implement crashlytics or similar service
+      // Production logging logic (e.g., Crashlytics) would go here
     }
   }
 
   logError(
-    code: string, 
-    message: string, 
-    details?: any, 
-    screen?: string, 
+    code: string,
+    message: string,
+    details?: any,
+    screen?: string,
     action?: string
   ): void {
     this.log({
@@ -46,8 +46,8 @@ class ErrorHandler {
   }
 
   logAsyncError(
-    error: any, 
-    screen?: string, 
+    error: any,
+    screen?: string,
     action?: string
   ): void {
     this.logError(
@@ -101,7 +101,7 @@ export const ErrorMessages: Record<string, string> = {
 // Utility function to show user-friendly error messages
 export const showErrorAlert = (error: AppError): void => {
   const userMessage = ErrorMessages[error.code] || ErrorMessages[ErrorCodes.UNKNOWN_ERROR];
-  
+
   // In real app, use proper Alert from React Native
   console.error('User Error:', userMessage, error.details);
 };
