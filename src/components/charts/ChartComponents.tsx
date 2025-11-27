@@ -237,10 +237,10 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 interface ComparisonBarChartProps {
   data: {
     labels: string[];
-    datasets: Array<{
+    datasets: {
       data: number[];
       color?: (opacity: number) => string;
-    }>;
+    }[];
   };
   title: string;
   height?: number;

@@ -45,13 +45,13 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
   const getGradientColors = () => {
     switch (variant) {
       case 'primary':
-        return colors.gradients.primary;
+        return colors.gradients.primary as any;
       case 'success':
-        return colors.gradients.success;
+        return colors.gradients.success as any;
       case 'danger':
-        return [colors.error[400], colors.error[600]] as readonly [string, string, ...string[]];
+        return [colors.error[400], colors.error[600]] as any;
       default:
-        return colors.gradients.primary;
+        return colors.gradients.primary as any;
     }
   };
 
@@ -124,10 +124,10 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
 };
 
 const createStyles = (
-  colors: any, 
-  typography: any, 
-  spacing: any, 
-  borderRadius: any, 
+  colors: any,
+  typography: any,
+  spacing: any,
+  borderRadius: any,
   shadows: any,
   variant: ButtonVariant,
   size: ButtonSize,

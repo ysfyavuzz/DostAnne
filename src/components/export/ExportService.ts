@@ -1,6 +1,5 @@
-import React from 'react';
-import * as FileSystem from 'expo-file-system/build/legacy/FileSystem';
-import { EncodingType } from 'expo-file-system/build/legacy/FileSystem.types';
+import * as React from 'react';
+import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 
@@ -20,17 +19,20 @@ export class ExportService {
   static async generatePDF(data: ExportData): Promise<string> {
     // HTML template for PDF generation
     const htmlContent = this.generateHTMLTemplate(data);
-    
+
     try {
       // Create file in document directory
+      if (!FileSystem.Paths.document.uri) {
+        throw new Error('Dosya dizini bulunamadı');
+      }
       const fileName = `${data.title}_${new Date().toISOString().split('T')[0]}.pdf`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-      
+      const fileUri = `${FileSystem.Paths.document.uri}/${fileName}`;
+
       // Write HTML content to file
       await FileSystem.writeAsStringAsync(fileUri, htmlContent, {
-        encoding: EncodingType.UTF8,
+        encoding: 'utf8',
       });
-      
+
       return fileUri;
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -42,11 +44,11 @@ export class ExportService {
     try {
       // Generate CSV content (simple Excel format)
       let csvContent = '';
-      
+
       data.sections.forEach(section => {
         csvContent += `\n\n${section.title}\n`;
         csvContent += section.headers.join(',') + '\n';
-        
+
         section.data.forEach(row => {
           const rowData = section.headers.map(header => {
             const value = row[header] || '';
@@ -57,12 +59,15 @@ export class ExportService {
       });
 
       const fileName = `${data.title}_${new Date().toISOString().split('T')[0]}.csv`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-      
+      if (!FileSystem.Paths.document.uri) {
+        throw new Error('Dosya dizini bulunamadı');
+      }
+      const fileUri = `${FileSystem.Paths.document.uri}/${fileName}`;
+
       await FileSystem.writeAsStringAsync(fileUri, csvContent, {
-        encoding: EncodingType.UTF8,
+        encoding: 'utf8',
       });
-      
+
       return fileUri;
     } catch (error) {
       console.error('Excel generation error:', error);
@@ -73,7 +78,7 @@ export class ExportService {
   static async shareFile(fileUri: string): Promise<void> {
     try {
       const isAvailable = await Sharing.isAvailableAsync();
-      
+
       if (isAvailable) {
         await Sharing.shareAsync(fileUri, {
           mimeType: fileUri.endsWith('.pdf') ? 'application/pdf' : 'text/csv',
@@ -197,7 +202,7 @@ export class ExportService {
 
 // Helper function to sort records by timestamp
 const sortRecordsByTimestamp = (records: any[]): any[] => {
-  return records.sort((a, b) => 
+  return records.sort((a, b) =>
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 };
@@ -206,8 +211,8 @@ export const prepareFeedingData = (records: any[]): ExportData => {
   const sortedRecords = sortRecordsByTimestamp(records);
 
   const feedingByType = sortedRecords.reduce((acc, record) => {
-    const type = record.type === 'breast' ? 'Anne Sütü' : 
-                record.type === 'bottle' ? 'Mama' : 'Ek Gıda';
+    const type = record.type === 'breast' ? 'Anne Sütü' :
+      record.type === 'bottle' ? 'Mama' : 'Ek Gıda';
     if (!acc[type]) acc[type] = 0;
     acc[type] += record.amount || 1;
     return acc;
@@ -230,8 +235,8 @@ export const prepareFeedingData = (records: any[]): ExportData => {
         headers: ['Tarih', 'Tür', 'Miktar', 'Süre', 'Notlar'],
         data: sortedRecords.slice(0, 50).map(record => ({
           'Tarih': new Date(record.timestamp).toLocaleString('tr-TR'),
-          'Tür': record.type === 'breast' ? 'Anne Sütü' : 
-               record.type === 'bottle' ? 'Mama' : 'Ek Gıda',
+          'Tür': record.type === 'breast' ? 'Anne Sütü' :
+            record.type === 'bottle' ? 'Mama' : 'Ek Gıda',
           'Miktar': `${record.amount || '-'} ml`,
           'Süre': record.duration ? `${record.duration} dk` : '-',
           'Notlar': record.notes || '-',
@@ -268,8 +273,8 @@ export const prepareHealthData = (records: any[], vaccinations: any[]): ExportDa
         data: Object.entries(healthStats).map(([type, values]) => {
           const stats = getStats(values as number[]);
           const typeLabel = type === 'temperature' ? 'Vücut Isısı (°C)' :
-                          type === 'weight' ? 'Kilo (kg)' :
-                          type === 'height' ? 'Boy (cm)' : type;
+            type === 'weight' ? 'Kilo (kg)' :
+              type === 'height' ? 'Boy (cm)' : type;
           return {
             'Ölçüm Türü': typeLabel,
             'Minimum': stats.min,
@@ -284,8 +289,8 @@ export const prepareHealthData = (records: any[], vaccinations: any[]): ExportDa
         data: sortedRecords.slice(0, 50).map(record => ({
           'Tarih': new Date(record.timestamp).toLocaleString('tr-TR'),
           'Tür': record.type === 'temperature' ? 'Vücut Isısı' :
-               record.type === 'weight' ? 'Kilo' :
-               record.type === 'height' ? 'Boy' : record.type,
+            record.type === 'weight' ? 'Kilo' :
+              record.type === 'height' ? 'Boy' : record.type,
           'Değer': record.value,
           'Birim': record.unit,
           'Notlar': record.notes || '-',
@@ -297,11 +302,11 @@ export const prepareHealthData = (records: any[], vaccinations: any[]): ExportDa
         data: vaccinations.map(vaccine => ({
           'Aşı Adı': vaccine.name,
           'Durum': vaccine.status === 'completed' ? 'Tamamlandı' :
-                  vaccine.status === 'pending' ? 'Bekliyor' :
-                  vaccine.status === 'overdue' ? 'Gecikmiş' : 'Yaklaşan',
+            vaccine.status === 'pending' ? 'Bekliyor' :
+              vaccine.status === 'overdue' ? 'Gecikmiş' : 'Yaklaşan',
           'Önerilen Yaş': vaccine.recommendedAge,
           'Planlanan Tarih': new Date(vaccine.dueDate).toLocaleDateString('tr-TR'),
-          'Uygulama Tarihi': vaccine.administeredDate ? 
+          'Uygulama Tarihi': vaccine.administeredDate ?
             new Date(vaccine.administeredDate).toLocaleDateString('tr-TR') : '-',
         })),
       },
@@ -314,7 +319,7 @@ export const prepareSleepData = (records: any[]): ExportData => {
 
   const sleepStats = {
     totalSessions: sortedRecords.length,
-    avgDuration: sortedRecords.length > 0 ? 
+    avgDuration: sortedRecords.length > 0 ?
       Math.round(sortedRecords.reduce((sum, r) => sum + (r.duration || 0), 0) / sortedRecords.length) : 0,
     totalSleepHours: Math.round(sortedRecords.reduce((sum, r) => sum + (r.duration || 0), 0) / 60),
   };
@@ -338,7 +343,7 @@ export const prepareSleepData = (records: any[]): ExportData => {
         data: sortedRecords.slice(0, 50).map(record => {
           const startTime = new Date(record.timestamp);
           const endTime = new Date(startTime.getTime() + (record.duration || 0) * 60000);
-          
+
           return {
             'Tarih': startTime.toLocaleDateString('tr-TR'),
             'Başlangıç': startTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),

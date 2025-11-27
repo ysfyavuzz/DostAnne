@@ -2,6 +2,8 @@ import React, { useState, useEffect, createContext } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { Colors, DarkColors } from '../constants/Colors';
+
 export type ThemeType = 'light' | 'dark' | 'auto';
 export type AccentColor = 'primary' | 'secondary' | 'blue' | 'purple' | 'pink' | 'green' | 'orange';
 
@@ -25,8 +27,6 @@ export interface Theme {
     header: string;
   };
 }
-
-import { Colors, DarkColors } from '../constants/Colors';
 
 const lightColors = {
   primary: Colors.primary[500],

@@ -95,7 +95,7 @@ class DatabaseService {
   private async executeInsert(query: string, params: any[], errorMessage: string): Promise<number> {
     const db = this.ensureDatabase();
     const result = await db.runAsync(query, params);
-    
+
     if (result.changes > 0) {
       return result.lastInsertRowId;
     }
@@ -106,12 +106,12 @@ class DatabaseService {
   private async executeUpdate(table: string, id: number, updates: Record<string, any>): Promise<boolean> {
     const db = this.ensureDatabase();
     const fields = Object.keys(updates).filter(key => key !== 'id');
-    
+
     if (fields.length === 0) return false;
 
     const setClause = fields.map(field => `${field} = ?`).join(', ');
     const values = fields.map(field => updates[field]);
-    
+
     const result = await db.runAsync(
       `UPDATE ${table} SET ${setClause} WHERE id = ?`,
       [...values, id]
@@ -258,7 +258,7 @@ class DatabaseService {
       [baby.name, baby.birthDate, baby.gender, baby.weight, baby.height, baby.bloodType ?? null, baby.photo ?? null, now, now],
       'Failed to create baby profile'
     );
-    
+
     // Store current baby ID in AsyncStorage
     await AsyncStorage.setItem('currentBabyId', id.toString());
     return id;
@@ -314,10 +314,10 @@ class DatabaseService {
 
   async getActivities(babyId: number, limit?: number): Promise<ActivityRecord[]> {
     const db = this.ensureDatabase();
-    const query = limit 
+    const query = limit
       ? 'SELECT * FROM activity_records WHERE babyId = ? ORDER BY startTime DESC LIMIT ?'
       : 'SELECT * FROM activity_records WHERE babyId = ? ORDER BY startTime DESC';
-    
+
     const params = limit ? [babyId, limit] : [babyId];
     const activities = await db.getAllAsync<ActivityRecord>(query, params);
     return activities;
@@ -380,10 +380,10 @@ class DatabaseService {
 
   async getSleepSessions(babyId: number, limit?: number): Promise<SleepSession[]> {
     const db = this.ensureDatabase();
-    const query = limit 
+    const query = limit
       ? 'SELECT * FROM sleep_sessions WHERE babyId = ? ORDER BY startTime DESC LIMIT ?'
       : 'SELECT * FROM sleep_sessions WHERE babyId = ? ORDER BY startTime DESC';
-    
+
     const params = limit ? [babyId, limit] : [babyId];
     const sessions = await db.getAllAsync<SleepSession>(query, params);
     return sessions;
@@ -406,10 +406,10 @@ class DatabaseService {
 
   async getFeedingSessions(babyId: number, limit?: number): Promise<FeedingSession[]> {
     const db = this.ensureDatabase();
-    const query = limit 
+    const query = limit
       ? 'SELECT * FROM feeding_sessions WHERE babyId = ? ORDER BY startTime DESC LIMIT ?'
       : 'SELECT * FROM feeding_sessions WHERE babyId = ? ORDER BY startTime DESC';
-    
+
     const params = limit ? [babyId, limit] : [babyId];
     const sessions = await db.getAllAsync<FeedingSession>(query, params);
     return sessions;
@@ -444,7 +444,7 @@ class DatabaseService {
   }> {
     const db = this.ensureDatabase();
     const today = new Date().toISOString().split('T')[0];
-    
+
     const feedingCount = await db.getFirstAsync<{ count: number }>(
       `SELECT COUNT(*) as count FROM feeding_sessions 
        WHERE babyId = ? AND DATE(startTime) = ?`,
