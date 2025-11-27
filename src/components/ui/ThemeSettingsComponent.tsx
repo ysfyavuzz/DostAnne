@@ -1,4 +1,3 @@
-```javascript
 import React from 'react';
 import {
   View,
@@ -48,7 +47,7 @@ export default function ThemeSettingsComponent({
     {
       type: 'auto',
       label: 'Otomatik',
-      description: `Sistem ayarını takip eder(${ isSystemDark? 'Koyu': 'Açık' })`,
+      description: `Sistem ayarını takip eder(${isSystemDark ? 'Koyu' : 'Açık'})`,
       icon: 'settings-outline',
     },
   ];
