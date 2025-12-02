@@ -8,14 +8,7 @@ import {
 } from 'react-native';
 import {
   LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-  ContributionGraph,
-  StackedBarChart,
 } from 'react-native-chart-kit';
-import { Line } from 'react-native-svg';
-import { LinearGradient } from 'expo-linear-gradient';
 
 interface GrowthDataPoint {
   month: string;

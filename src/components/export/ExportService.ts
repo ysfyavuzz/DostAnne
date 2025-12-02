@@ -1,4 +1,3 @@
-import * as React from 'react';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
@@ -22,11 +21,11 @@ export class ExportService {
 
     try {
       // Create file in document directory
-      if (!FileSystem.Paths.document.uri) {
+      if (!FileSystem.documentDirectory) {
         throw new Error('Dosya dizini bulunamadı');
       }
       const fileName = `${data.title}_${new Date().toISOString().split('T')[0]}.pdf`;
-      const fileUri = `${FileSystem.Paths.document.uri}/${fileName}`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
       // Write HTML content to file
       await FileSystem.writeAsStringAsync(fileUri, htmlContent, {
@@ -59,10 +58,10 @@ export class ExportService {
       });
 
       const fileName = `${data.title}_${new Date().toISOString().split('T')[0]}.csv`;
-      if (!FileSystem.Paths.document.uri) {
+      if (!FileSystem.documentDirectory) {
         throw new Error('Dosya dizini bulunamadı');
       }
-      const fileUri = `${FileSystem.Paths.document.uri}/${fileName}`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
       await FileSystem.writeAsStringAsync(fileUri, csvContent, {
         encoding: 'utf8',

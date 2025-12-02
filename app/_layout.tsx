@@ -3,7 +3,6 @@ import { Stack, useRouter } from 'expo-router';
 import { Provider } from 'react-redux';
 import { store } from '../src/store/store';
 import { useDatabase } from '../src/hooks/useDatabase';
-import { View, Text, ActivityIndicator } from 'react-native';
 
 import { AnimatedSplash } from '../src/components/AnimatedSplash';
 
