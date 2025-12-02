@@ -16,6 +16,8 @@ interface ThemedInputProps extends TextInputProps {
   onRightIconPress?: () => void;
   helperText?: string;
   isPassword?: boolean;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 export const ThemedInput: React.FC<ThemedInputProps> = ({
@@ -26,6 +28,8 @@ export const ThemedInput: React.FC<ThemedInputProps> = ({
   onRightIconPress,
   helperText,
   isPassword = false,
+  accessibilityLabel,
+  accessibilityHint,
   ...props
 }) => {
   const { colors, typography, spacing, borderRadius, isDark } = useThemedStyles();
@@ -58,33 +62,53 @@ export const ThemedInput: React.FC<ThemedInputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           secureTextEntry={isPassword && !showPassword}
+          accessibilityLabel={accessibilityLabel || label || props.placeholder}
+          accessibilityHint={accessibilityHint || helperText}
+          accessible={true}
           {...props}
         />
         
         {isPassword && (
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Ionicons 
-              name={showPassword ? 'eye-off' : 'eye'} 
-              size={20} 
-              color={colors.neutral[400]} 
+          <TouchableOpacity
+            onPress={() => setShowPassword(!showPassword)}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+            accessibilityHint="Şifre alanını görünür veya gizli yapmak için dokunun"
+          >
+            <Ionicons
+              name={showPassword ? 'eye-off' : 'eye'}
+              size={20}
+              color={colors.neutral[400]}
               style={styles.rightIcon}
             />
           </TouchableOpacity>
         )}
-        
+
         {rightIcon && !isPassword && (
-          <TouchableOpacity onPress={onRightIconPress}>
-            <Ionicons 
-              name={rightIcon} 
-              size={20} 
-              color={colors.neutral[400]} 
+          <TouchableOpacity
+            onPress={onRightIconPress}
+            accessibilityRole="button"
+            accessibilityLabel="İkon butonu"
+          >
+            <Ionicons
+              name={rightIcon}
+              size={20}
+              color={colors.neutral[400]}
               style={styles.rightIcon}
             />
           </TouchableOpacity>
         )}
       </View>
       
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && (
+        <Text
+          style={styles.error}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
+          {error}
+        </Text>
+      )}
       {helperText && !error && <Text style={styles.helperText}>{helperText}</Text>}
     </View>
   );

@@ -63,6 +63,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             { color: colors.text.primary },
           ]}
           numberOfLines={1}
+          accessibilityRole="header"
+          accessibilityLabel={title}
         >
           {title}
         </Text>
@@ -74,6 +76,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               style={styles.iconButton}
               onPress={onNotificationPress}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Bildirimler"
+              accessibilityHint="Bildirimlerinizi görüntülemek için dokunun"
             >
               <Ionicons
                 name="notifications-outline"
@@ -87,6 +92,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               style={styles.iconButton}
               onPress={onSettingsPress}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Ayarlar"
+              accessibilityHint="Uygulama ayarlarını açmak için dokunun"
             >
               <Ionicons
                 name="settings-outline"

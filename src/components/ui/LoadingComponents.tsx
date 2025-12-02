@@ -171,9 +171,18 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   if (!visible) return null;
 
   return (
-    <View style={styles.overlay}>
+    <View
+      style={styles.overlay}
+      accessibilityViewIsModal={true}
+      accessibilityLabel="Yükleniyor"
+      accessibilityLiveRegion="polite"
+    >
       <View style={[styles.loadingCard, { backgroundColor: colors.card, ...shadows.md }]}>
-        <ActivityIndicator size="large" color={colors.primary[500]} />
+        <ActivityIndicator
+          size="large"
+          color={colors.primary[500]}
+          accessibilityLabel={message}
+        />
         <ThemedText style={styles.loadingText}>{message}</ThemedText>
       </View>
     </View>
@@ -228,7 +237,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const { colors, shadows } = useThemedStyles();
 
   return (
-    <View style={[styles.emptyState, { backgroundColor: colors.card, ...shadows.sm }]}>
+    <View
+      style={[styles.emptyState, { backgroundColor: colors.card, ...shadows.sm }]}
+      accessible={true}
+      accessibilityRole="text"
+      accessibilityLabel={`${title}. ${subtitle}`}
+    >
       <Text style={[styles.emptyIcon, { color: colors.primary[500] }]}>{icon}</Text>
       <ThemedText style={[styles.emptyTitle, { color: colors.text.primary }]}>{title}</ThemedText>
       <ThemedText style={[styles.emptySubtitle, { color: colors.text.secondary }]}>{subtitle}</ThemedText>
@@ -236,6 +250,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <TouchableOpacity
           style={[styles.emptyActionButton, { backgroundColor: colors.primary[500], ...shadows.sm }]}
           onPress={onAction}
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel}
+          accessibilityHint={`${title} için yeni içerik ekleyin`}
         >
           <ThemedText style={[styles.emptyActionText, { color: colors.text.inverse }]}>{actionLabel}</ThemedText>
         </TouchableOpacity>
@@ -260,7 +277,13 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   const { colors, shadows } = useThemedStyles();
 
   return (
-    <View style={[styles.errorState, { backgroundColor: colors.card, ...shadows.sm }]}>
+    <View
+      style={[styles.errorState, { backgroundColor: colors.card, ...shadows.sm }]}
+      accessible={true}
+      accessibilityRole="alert"
+      accessibilityLabel={`Hata: ${title}. ${subtitle}`}
+      accessibilityLiveRegion="assertive"
+    >
       <Text style={styles.errorIcon}>🚨</Text>
       <ThemedText style={[styles.errorTitle, { color: colors.text.primary }]}>{title}</ThemedText>
       <ThemedText style={[styles.errorSubtitle, { color: colors.text.secondary }]}>{subtitle}</ThemedText>
@@ -268,6 +291,9 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         <TouchableOpacity
           style={[styles.errorActionButton, { backgroundColor: colors.error[500], ...shadows.sm }]}
           onPress={onRetry}
+          accessibilityRole="button"
+          accessibilityLabel={retryLabel}
+          accessibilityHint="Hatayı düzeltmek için tekrar deneyin"
         >
           <ThemedText style={[styles.errorActionText, { color: colors.text.inverse }]}>{retryLabel}</ThemedText>
         </TouchableOpacity>

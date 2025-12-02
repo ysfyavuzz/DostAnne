@@ -18,6 +18,8 @@ interface ThemedButtonProps {
   disabled?: boolean;
   fullWidth?: boolean;
   style?: ViewStyle;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 export const ThemedButton: React.FC<ThemedButtonProps> = ({
@@ -31,6 +33,8 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
   disabled = false,
   fullWidth = false,
   style,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const { colors, typography, spacing, borderRadius, shadows } = useThemedStyles();
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -112,6 +116,14 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
         onPressOut={handlePressOut}
         disabled={isDisabled}
         style={[styles.buttonWrapper, style]}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel || title}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{
+          disabled: isDisabled,
+          busy: loading,
+        }}
+        accessible={true}
       >
         {children}
       </Pressable>

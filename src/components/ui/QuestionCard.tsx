@@ -35,6 +35,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onPress })
       ]}
       onPress={onPress}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={`Soru: ${question.title}. ${question.author} tarafından ${timeAgo} soruldu. ${question.answerCount} cevap, ${question.views} görüntülenme${question.isResolved ? '. Çözüldü' : ''}`}
+      accessibilityHint="Soru detaylarını görmek için dokunun"
     >
       {/* Header with author and time */}
       <View style={styles.header}>
